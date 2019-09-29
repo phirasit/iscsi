@@ -1,0 +1,5 @@
+#ifndef __ISCSI_REQUEST_DATA_IN_H__ 
+#define __ISCSI_REQUEST_DATA_IN_H__
+
+
+#endif // __ISCSI_REQUEST_DATA_IN_H__
