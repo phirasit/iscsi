@@ -22,6 +22,8 @@ struct iSCSISession {
   // struct iSCSIConnection* connections[MAX_SUPPORTED_CONNS];
 };
 
+struct iSCSISession ISCSI_DEFAULT_SESSION;
+
 static inline int iscsi_session_full(struct iSCSISession* session) {
   return session->num_connections >= session->max_connections;
 }

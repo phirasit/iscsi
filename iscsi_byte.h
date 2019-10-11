@@ -14,4 +14,11 @@ static inline int iscsi_byte_byte2int(byte* buffer) {
     | ((int) buffer[3]      );
 }
 
+static inline void iscsi_byte_int2byte(byte* buffer, int value) {
+  buffer[0] = (value >> 24) & 0xFF;
+  buffer[1] = (value >> 16) & 0xFF;
+  buffer[2] = (value >>  8) & 0xFF;
+  buffer[3] = (value      ) & 0xFF;
+}
+
 #endif // __ISCSI_BYTE_H__

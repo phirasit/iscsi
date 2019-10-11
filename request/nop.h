@@ -1,6 +1,7 @@
 #ifndef __ISCSI_REQUEST_NOP_H__
 #define __ISCSI_REQUEST_NOP_H__
 
+#include "iscsi_buffer.h"
 #include "iscsi_pdu.h"
 #include "iscsi_server.h"
 #include "iscsi_type.h"
@@ -24,18 +25,19 @@ int generate_keep_alive_pdu(byte* response, int length) {
 }
 */
 
-int iscsi_request_nop_out_process(byte* request, byte* response, int length) {
-  if (length < iscsi_pdu_length(request)) return BUFFER_FULL;
-  iscsi_pdu_generate_from_buffer(response, request);
-  iscsi_pdu_set_immediate(response, 1);
-  iscsi_pdu_set_opcode(response, NOP_IN);
-  iscsi_pdu_set_final(response, 0);
+int iscsi_request_nop_out_process(byte* request, struct iSCSIBuffer* response) {
+  byte* ptr = iscsi_buffer_acquire_lock_for_length(response, iscsi_pdu_length(request));
+
+  iscsi_pdu_generate_from_buffer(ptr, request);
+  iscsi_pdu_set_immediate(ptr, 1);
+  iscsi_pdu_set_opcode(ptr, NOP_IN);
+  iscsi_pdu_set_final(ptr, 0);
   memcpy(
-    response + BASIC_HEADER_SEGMENT_LENGTH,
+    ptr + BASIC_HEADER_SEGMENT_LENGTH,
     request + BASIC_HEADER_SEGMENT_LENGTH,
     iscsi_pdu_data_segment_length(request)
   );
-  return iscsi_pdu_length(response);
+  return iscsi_pdu_length(ptr);  
 
   /*
   return iscsi_pdu_generate(

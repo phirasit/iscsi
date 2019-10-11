@@ -3,6 +3,7 @@
 
 #include "iscsi_buffer.h"
 #include "iscsi_connection_parameter.h"
+#include "iscsi_session.h"
 
 struct iSCSISession;
 
@@ -10,6 +11,7 @@ struct iSCSIConnection {
   struct iSCSISession* session_reference;
   struct iSCSIBuffer receive_buffer;
   struct iSCSIBuffer response_buffer;
+  struct iSCSIConnectionParameter parameter;
 
   int socket_fd;
   int so_far_in_order; // boolean
@@ -30,6 +32,11 @@ void iscsi_connection_create(
 int incoming_request(
   struct iSCSIConnection *connection,
   byte* buffer,
+  int length
+);
+
+void clear_buffer(
+  struct iSCSIConnection* connection,
   int length
 );
 

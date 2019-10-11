@@ -1,22 +1,26 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+
+#include <pthread.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
-#include <string.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h>
 
-#include "iscsi.h"
+#include "iscsi_connection.h"
 #include "iscsi_session.h"
 #include "iscsi_server.h"
-#include "iscsi_connection.h"
+#include "iscsi_pdu.h"
+
+#include "logger.h"
 
 #ifndef TCP_PORT
 #define TCP_PORT 4000
@@ -44,9 +48,8 @@ int main() {
 
   fprintf(stderr, "Successfully bind socket to port %d\n", TCP_PORT);
 
-  // Create socket
-  struct iSCSISession iscsi_session;
-  iscsi_session_create(&iscsi_session);
+  // Create default session
+  iscsi_session_create(&ISCSI_DEFAULT_SESSION);
 
   while (1)
   {
@@ -55,36 +58,93 @@ int main() {
 
     int client_socket_fd = accept(socket_desc, (struct sockaddr*) &client, &addr_size);
 
+    /*
     if (iscsi_session_full(&iscsi_session)) {
       // session is full
       close(client_socket_fd);
       continue;
     }
+    */
 
-    // TODO fix this
-    struct iSCSIConnection connection;
-    iscsi_connection_create(&connection, client_socket_fd, &iscsi_session);
-    start_connection(&connection);
+    struct iSCSIConnection *connection = (struct iSCSIConnection*) malloc (sizeof(struct iSCSIConnection));
+    iscsi_connection_create(connection, client_socket_fd, NULL);
+    start_connection(connection);
   }
 
   return 0;
 }
 
-void start_connection(struct iSCSIConnection* connection) {
+void* start_receiver(void* args) {
+  struct iSCSIConnection* connection = (struct iSCSIConnection*) args;
+
   char buffer[BUFFER_SIZE];
   int len, status;
 
   while (1) {
+    logger("file descriptor: %d\n", connection->socket_fd);
     len = recv(connection->socket_fd, buffer, BUFFER_SIZE, 0);
-    if (len == 0) break; // connection close
-
-    status = incoming_request(connection, buffer, len);
-    sleep(100);
-
-    if (status == SOCKET_TERMINATE) {
+    if (len == -1) {
+      logger("error occurrd (code %d): %s\n", errno, strerror(errno));
       break;
     }
+    if (len == 0) break; // connection close
+
+    logger("receive data length %d bytes\n", len);
+
+    status = incoming_request(connection, buffer, len);
+
+    logger("finish process with status = %d\n", status);
+
+    switch (status) {
+      case SOCKET_TERMINATE: goto end; 
+    }
+
+    usleep(10000);
+  }
+end:
+  logger("connection closed\n");
+  close(connection->socket_fd);
+  // TODO change state to terminated
+}
+
+void* start_transmit(void* args) {
+  struct iSCSIConnection* connection = (struct iSCSIConnection*) args;
+  struct iSCSIBuffer* buffer = &connection->response_buffer;
+
+  while (1) {
+
+    // TODO break if state is terminated
+    if (0) {
+      break;
+    }
+  
+    int length = iscsi_pdu_valid(
+      iscsi_buffer_data(buffer),
+      iscsi_buffer_length(buffer)
+    );
+    if (length > 0) {
+      logger("transmit length: %d\n", length);
+
+      iscsi_buffer_acquire_lock(buffer);
+      send(connection->socket_fd, buffer, length, 0);
+      iscsi_buffer_release_lock(buffer, 0);
+
+      iscsi_buffer_flush(buffer, length);
+    }
+    usleep(10000);
   }
 
-  close(connection->socket_fd);
+  logger("transmission closed\n");
+}
+
+void start_connection(struct iSCSIConnection* connection) {
+  pthread_t receive_thread, transmit_thread;
+  int stat1 = pthread_create(&receive_thread, NULL, start_receiver, (void*) connection);
+  if (stat1) {
+    logger("failed to start receiver thread\n");
+  }
+  int stat2 = pthread_create(&transmit_thread, NULL, start_transmit, (void*) connection);
+  if (stat2) {
+    logger("failed to start transmit thread\n");
+  }
 }

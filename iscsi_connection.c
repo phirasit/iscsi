@@ -1,7 +1,10 @@
+#include "iscsi_buffer.h"
 #include "iscsi_connection.h"
 #include "iscsi_session.h"
 #include "iscsi_server.h"
 #include "iscsi_pdu.h"
+
+#include "logger.h"
 
 // Connection 
 void iscsi_connection_create(
@@ -18,28 +21,29 @@ void iscsi_connection_create(
   connection->expected_stat_sn = 0;
   connection->perform_connection_cleanup = 0;
 
-  create_new_iscsi_buffer(&connection->receive_buffer);
-  create_new_iscsi_buffer(&connection->response_buffer);
+  iscsi_buffer_new(&connection->receive_buffer);
+  iscsi_buffer_new(&connection->response_buffer);
 }
 
 int incoming_request(struct iSCSIConnection* connection, byte* buffer, int length) {
-  int error = iscsi_buffer_receive(&connection->receive_buffer, buffer, length);
+  struct iSCSIBuffer* receiver = &connection->receive_buffer;
+
+  int error = iscsi_buffer_receive(receiver, buffer, length);
   if (error) return error;
 
-  int pdu_length = iscsi_pdu_length(connection->receive_buffer.data);
-  if (pdu_length > length) return BUFFER_FULL;
+  if (!iscsi_pdu_valid(iscsi_buffer_data(receiver), iscsi_buffer_length(receiver))) {
+    return PDU_INCOMPLETE;
+  }
 
-  int response_pdu_status;
-  do {
-    response_pdu_status = iscsi_server_process(
-      connection->receive_buffer.data, 
-      connection,
-      connection->response_buffer.data,
-      iscsi_buffer_free_space(&connection->response_buffer)
-    );
-  } while (response_pdu_status != BUFFER_FULL);
-
-  iscsi_buffer_flush(&connection->receive_buffer, response_pdu_status);
+  int response_pdu_status = iscsi_server_process(
+    connection->receive_buffer.data, 
+    connection,
+    &connection->response_buffer
+  );
 
   return response_pdu_status;
+}
+
+void clear_buffer(struct iSCSIConnection* connection, int length) {
+  iscsi_buffer_flush(&connection->receive_buffer, length);
 }

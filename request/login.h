@@ -7,6 +7,13 @@
 #include "iscsi_session.h"
 #include "iscsi_type.h"
 
+#include "target/iscsi_target.h"
+
+#include "logger.h"
+
+extern struct iSCSISession ISCSI_DEFAULT_SESSION;
+extern struct iSCSITarget ISCSI_DEFAULT_TARGET;
+
 enum LOGIN_STATUS {
   SUCCESS = 0x0000,
   TARGET_MOVED_TEMPORARILY = 0x0101,
@@ -97,7 +104,7 @@ static enum LOGIN_STATUS setup_normal_session(byte* _request, struct iSCSISessio
     iscsi_connection_parameter_get("TargetName")
   );
   */
-  struct iSCSITarget* target = ISCSI_DEFAULT_TARGET;
+  struct iSCSITarget* target = &ISCSI_DEFAULT_TARGET;
   
   if (target == NULL) {
     return NOT_FOUND;
@@ -116,7 +123,9 @@ static enum LOGIN_STATUS setup_normal_session(byte* _request, struct iSCSISessio
 }
 
 static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* connection) {
-  if (!iscsi_connection_parameter_get(connection, "InitiatorName")) {
+  logger("setup session\n");
+  if (!iscsi_connection_parameter_get(&connection->parameter, "InitiatorName")) {
+    logger("no InitiatorName\n");
     return INITIATOR_ERROR;
   }
 
@@ -126,17 +135,17 @@ static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* co
     // right now just use the pre-defined session
     iscsi_session_new(connection->session_reference, iscsi_pdu_login_ISID(request));
     */
-    connection->session_reference = ISCSI_DEFAULT_SESSION;
+    connection->session_reference = &ISCSI_DEFAULT_SESSION;
     // setup_normal_session(request, connection->session_reference);
 
     // connection->session->CommandNumberStart = 1
     connection->session_reference->ExpCmdSN = iscsi_pdu_login_ExpCmdSN(request);
     connection->connection_id = iscsi_pdu_login_CID(request);
 
-    if (strcmp(iscsi_connection_parameter_get(connection, "SessionType"), "Discovery") == 0) {
+    if (strcmp(iscsi_connection_parameter_get(&connection->parameter, "SessionType"), "Discovery") == 0) {
       connection->session_reference->is_discovery = 1;
     } else {
-      if (iscsi_connection_parameter_get(connection, "TargetName")) {
+      if (iscsi_connection_parameter_get(&connection->parameter, "TargetName") != NULL) {
         // TODO fix this
         return setup_normal_session(request, connection->session_reference);
       } else {
@@ -152,7 +161,7 @@ static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* co
       iscsi_pdu_login_TSIH(request)
     );
     */
-    struct iSCSISession* session = ISCSI_DEFAULT_SESSION;
+    struct iSCSISession* session = &ISCSI_DEFAULT_SESSION;
 
     /*
     // TODO check session ISID and TSIH
@@ -172,55 +181,62 @@ static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* co
   return SUCCESS;
 }
 
-static int response_partial_login(byte* request, struct iSCSIConnection* connection, byte* response, int length) {
-  iscsi_pdu_generate_from_buffer(response, request);
-  iscsi_pdu_set_opcode(response, LOGIN_RES);
-  iscsi_pdu_set_final(response, 0);
+static int response_partial_login(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
+  logger("partial login\n");
+  byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
+  iscsi_pdu_generate_from_buffer(buffer, request);
+  iscsi_pdu_set_opcode(buffer, LOGIN_RES);
+  iscsi_pdu_set_final(buffer, 0);
   // iscsi_pdu_login_set_response_ExpCmdSN(response, iscsi_pdu_login_ExpCmdSN(request));
   if (iscsi_pdu_login_transit(request)) {
-    iscsi_pdu_login_set_response_status(response, INITIATOR_ERROR);
+    iscsi_pdu_login_set_response_status(buffer, INITIATOR_ERROR);
   } else {
-    iscsi_pdu_login_set_response_status(response, SUCCESS);
+    iscsi_pdu_login_set_response_status(buffer, SUCCESS);
   }
-
+  iscsi_buffer_release_lock(response, BASIC_HEADER_SEGMENT_LENGTH);
   return BASIC_HEADER_SEGMENT_LENGTH;
 }
 
-static int response_with_request_parameters(byte* request, struct iSCSIConnection* connection, byte* response, int length) {
+static int response_with_request_parameters(byte* request, struct iSCSIConnection* connection, enum LOGIN_STATUS status, struct iSCSIBuffer* response) {
   // create respose packet
-  int parameter_length = iscsi_connection_parameter_length(connection);
+  int parameter_length = iscsi_connection_parameter_length(&connection->parameter);
   int total_packet_size = BASIC_HEADER_SEGMENT_LENGTH + parameter_length;
 
-  if (total_packet_size > length) {
-    return BUFFER_FULL;
-  }
+  byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_packet_size);
+  iscsi_pdu_generate_from_buffer(buffer, request);
+  iscsi_pdu_login_set_response_status(buffer, status);
+  iscsi_pdu_set_data_segment_length(buffer, parameter_length);
+  iscsi_buffer_release_lock(response, total_packet_size);
 
-  iscsi_pdu_generate_from_buffer(response, request);
-  iscsi_pdu_set_data_segment_length(response, parameter_length);
-
-  return BASIC_HEADER_SEGMENT_LENGTH + parameter_length;
+  return total_packet_size;
 }
 
-static int response_final_login(byte* request, struct iSCSIConnection* connection, byte* response, int length) {
+static int response_final_login(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
+  enum LOGIN_STATUS status = SUCCESS;
+  byte* ptr;
   switch (iscsi_pdu_login_csg(request)) {
     case SECURITY_NEGOTIATION:
       if (iscsi_pdu_login_transit(request)) {
         if (iscsi_pdu_login_nsg(request) == FULL_FEATURE) {
           connection->session_reference->is_full_feature_phase = 1;
+          status = SUCCESS;
         } else if (iscsi_pdu_login_transit(request) != SECURITY_NEGOTIATION) {
-          iscsi_pdu_login_set_response_status(response, INITIATOR_ERROR);
+          // iscsi_pdu_login_set_response_status(response, INITIATOR_ERROR);
+          status = INITIATOR_ERROR;
         }
       }
 
       // TODO copy parameters to response package
-      return response_with_request_parameters(request, connection, response, length);
+
+      return response_with_request_parameters(request, connection, status, response);
 
     case LOGIN_OPERATIONAL:
       if (iscsi_pdu_login_transit(request)) {
         if (iscsi_pdu_login_nsg(request) == FULL_FEATURE) {
           connection->session_reference->is_full_feature_phase = 1;
         } else {
-          iscsi_pdu_login_set_response_status(response, INITIATOR_ERROR);
+          // iscsi_pdu_login_set_response_status(response, INITIATOR_ERROR);
+          status = INITIATOR_ERROR;
         }
       }
 
@@ -233,60 +249,59 @@ static int response_final_login(byte* request, struct iSCSIConnection* connectio
       );
       */
 
-      return response_with_request_parameters(request, connection, response, length);
+      return response_with_request_parameters(request, connection, status, response);
 
     case FULL_FEATURE:
-      iscsi_pdu_login_set_response_status(response, INITIATOR_ERROR);
+      ptr = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
+      iscsi_pdu_generate_from_buffer(ptr, request);
+      iscsi_pdu_login_set_response_status(ptr, INITIATOR_ERROR);
+      iscsi_buffer_release_lock(response, BASIC_HEADER_SEGMENT_LENGTH);
       return BASIC_HEADER_SEGMENT_LENGTH;
   }
 
   return -1; // IMPOSSIBLE
 }
 
-int iscsi_request_login_reject(byte* request, struct iSCSIConnection* connection, byte* response, int length) {
-  if (length < BASIC_HEADER_SEGMENT_LENGTH) {
-    return BUFFER_FULL;
-  }
-
+int iscsi_request_login_reject(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   if (connection->session_reference == NULL) {
     return PDU_ERROR;
   }
 
-  iscsi_pdu_set_opcode(response, LOGIN_RES);
-  iscsi_pdu_login_set_TSIH(response, connection->session_reference->TSIH);
+  byte* ptr = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
+  iscsi_pdu_set_opcode(ptr, LOGIN_RES);
+  iscsi_pdu_login_set_TSIH(ptr, connection->session_reference->TSIH);
+  iscsi_buffer_release_lock(response, BASIC_HEADER_SEGMENT_LENGTH);
 
   return BASIC_HEADER_SEGMENT_LENGTH;
 }
 
-int iscsi_request_login_process(byte* request, struct iSCSIConnection* connection, byte* response, int length) {
-  if (length < BASIC_HEADER_SEGMENT_LENGTH) {
-    return BUFFER_FULL;
-  }
+int iscsi_request_login_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
+  logger("login process\n");
 
-  /*
-  // TODO fix this
-  iscsi_connection_parameter_update(
-    connection, 
+  iscsi_connection_parameter_create(
+    &connection->parameter, 
     iscsi_pdu_data(request),
     iscsi_pdu_data_segment_length(request)
   );
-  */
 
   if (iscsi_pdu_login_continue(request)) {
-    return response_partial_login(request, connection, response, length);
+    return response_partial_login(request, connection, response);
   } else {
     if (connection->session_reference == NULL) {
       enum LOGIN_STATUS status = setup_session(request, connection);
+      logger("setup session status %d\n", status);
       if (status != SUCCESS) {
-        iscsi_pdu_generate_from_buffer(response, request);
-        iscsi_pdu_set_opcode(response, LOGIN_RES);
-        iscsi_pdu_set_final(response, 1);
-        iscsi_pdu_login_set_response_status(response, status);
+        byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
+        iscsi_pdu_generate_from_buffer(buffer, request);
+        iscsi_pdu_set_opcode(buffer, LOGIN_RES);
+        iscsi_pdu_set_final(buffer, 1);
+        iscsi_pdu_login_set_response_status(buffer, status);
+        iscsi_buffer_release_lock(response, BASIC_HEADER_SEGMENT_LENGTH);
         return BASIC_HEADER_SEGMENT_LENGTH;
       }
     }
 
-    return response_final_login(request, connection, response, length);
+    return response_final_login(request, connection, response);
   }
 }
 

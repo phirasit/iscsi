@@ -1,6 +1,7 @@
 #ifndef __ISCSI_REQUEST_LOGOUT_H__
 #define __ISCSI_REQUEST_LOGOUT_H__
 
+#include "iscsi_buffer.h"
 #include "iscsi_type.h"
 
 enum LOGOUT_RESPONSE_CODE {
@@ -10,6 +11,6 @@ enum LOGOUT_RESPONSE_CODE {
   LOGOUT_CLEANUP_FAIL = 0x03
 };
 
-int iscsi_request_logout_process(byte* request, struct iSCSIConnection* connection, byte* response, int length);
+int iscsi_request_logout_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response);
 
 #endif

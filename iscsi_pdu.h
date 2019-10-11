@@ -6,6 +6,7 @@
 #include "iscsi_type.h"
 
 #define BASIC_HEADER_SEGMENT_LENGTH 48
+#define DEFAULT_TRANSFER_TAG 0xFFFFFFFF
 
 enum OPCODE {
   NOP_OUT  = 0x00,
@@ -69,6 +70,13 @@ static inline byte* iscsi_pdu_data(byte* buffer) {
   return buffer + BASIC_HEADER_SEGMENT_LENGTH;
 }
 
+static inline int iscsi_pdu_initiator_task_tag(byte* buffer) {
+  return iscsi_byte_byte2int(buffer + 16);
+}
+static inline int iscsi_pdu_target_transfer_tag(byte* buffer) {
+  return iscsi_byte_byte2int(buffer + 20);
+}
+
 // PDU information setter
 
 static inline void iscsi_pdu_set_immediate(byte* buffer, int i) {
@@ -83,15 +91,27 @@ static inline void iscsi_pdu_set_final(byte* buffer, int f) {
   buffer[1] = ((f & 0x01) << 7) | (buffer[1] & 0x7F); 
 }
 
+static inline void iscsi_pdu_set_ahs_length(byte* buffer, int ahs_length) {
+  buffer[4] = ahs_length & 0xFF;
+}
+
 static inline void iscsi_pdu_set_data_segment_length(byte* buffer, int segment_length) {
   buffer[5] = (segment_length >> 16) & 0xFF;
   buffer[6] = (segment_length >>  8) & 0xFF;
   buffer[7] = (segment_length      ) & 0xFF;
 }
 
+static inline void iscsi_pdu_set_initiator_task_tag(byte* buffer, int initiator_task_tag) {
+  iscsi_byte_int2byte(buffer + 16, initiator_task_tag);
+}
+
+static inline void iscsi_pdu_set_target_transfer_tag(byte* buffer, int target_transfer_tag) {
+  iscsi_byte_int2byte(buffer + 20, target_transfer_tag);
+}
+
 // helper functions
 
-static int iscsi_pdu_has_cmdSN(byte* buffer) {
+static inline int iscsi_pdu_has_cmdSN(byte* buffer) {
   int opcode = iscsi_pdu_opcode(buffer);
   return opcode == NOP_OUT
     || opcode == SCSI_CMD
@@ -106,12 +126,6 @@ static inline void iscsi_pdu_generate_from_buffer(byte* response, byte* request)
 
 // function prototype
 
-int iscsi_pdu_generate(
-    byte* response, int length, 
-    int immediate, enum OPCODE opcode, int final_bit, int opcode_specific,
-    int total_ahs_length, int data_segment_length,
-    byte* lun_opcode_specific, // 40-byte
-    byte* data // including ahs
-);
+int iscsi_pdu_valid(byte* pdu, int length);
 
 #endif // __ISCSI_PDU_H__

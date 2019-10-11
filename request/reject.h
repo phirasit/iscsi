@@ -1,6 +1,7 @@
 #ifndef __ISCSI_REQUEST_REJECT_H__
 #define __ISCSI_REQUEST_REJECT_H__
 
+#include "iscsi_buffer.h"
 #include "iscsi_pdu.h"
 #include "iscsi_server.h"
 #include "iscsi_type.h"
@@ -24,12 +25,16 @@ static inline void iscsi_pdu_request_reject_set_reason(byte* buffer, enum REJECT
   buffer[2] = (byte) reason;
 }
 
-int iscsi_request_reject(byte* request, enum REJECT_REASON reason, byte* response, int length) {
-  if (length < BASIC_HEADER_SEGMENT_LENGTH) return BUFFER_FULL;
-  iscsi_pdu_generate_from_buffer(response, request);
-  iscsi_pdu_set_opcode(response, REJECT);
-  iscsi_pdu_set_final(response, 1);
-  iscsi_pdu_request_reject_set_reason(response, reason);
+int iscsi_request_reject(byte* request, enum REJECT_REASON reason, struct iSCSIBuffer* response) {
+  byte* ptr = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
+
+  iscsi_pdu_generate_from_buffer(ptr, request);
+  iscsi_pdu_set_opcode(ptr, REJECT);
+  iscsi_pdu_set_final(ptr, 1);
+  iscsi_pdu_request_reject_set_reason(ptr, reason);
+
+  iscsi_buffer_release_lock(response, BASIC_HEADER_SEGMENT_LENGTH);
+  
   return BASIC_HEADER_SEGMENT_LENGTH;
 }
 
