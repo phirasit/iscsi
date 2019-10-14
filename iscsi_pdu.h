@@ -109,6 +109,11 @@ static inline void iscsi_pdu_set_data_segment_length(byte* buffer, int segment_l
   buffer[7] = (segment_length      ) & 0xFF;
 }
 
+static inline void iscsi_pdu_set_data_segment(byte* buffer, byte* data, int length) {
+  iscsi_pdu_set_data_segment_length(buffer, length);
+  memcpy(iscsi_pdu_data(buffer), data, length);
+}
+
 static inline void iscsi_pdu_set_initiator_task_tag(byte* buffer, int initiator_task_tag) {
   iscsi_byte_int2byte(buffer + 16, initiator_task_tag);
 }

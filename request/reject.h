@@ -2,8 +2,6 @@
 #define __ISCSI_REQUEST_REJECT_H__
 
 #include "iscsi_buffer.h"
-#include "iscsi_pdu.h"
-#include "iscsi_server.h"
 #include "iscsi_type.h"
 
 enum REJECT_REASON {
@@ -21,21 +19,6 @@ enum REJECT_REASON {
   WAITING_FOR_LOGOUT = 0x0C
 };
 
-static inline void iscsi_pdu_request_reject_set_reason(byte* buffer, enum REJECT_REASON reason) {
-  buffer[2] = (byte) reason;
-}
-
-int iscsi_request_reject(byte* request, enum REJECT_REASON reason, struct iSCSIBuffer* response) {
-  byte* ptr = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
-
-  iscsi_pdu_generate_from_buffer(ptr, request);
-  iscsi_pdu_set_opcode(ptr, REJECT);
-  iscsi_pdu_set_final(ptr, 1);
-  iscsi_pdu_request_reject_set_reason(ptr, reason);
-
-  iscsi_buffer_release_lock(response, BASIC_HEADER_SEGMENT_LENGTH);
-  
-  return BASIC_HEADER_SEGMENT_LENGTH;
-}
+int iscsi_request_reject(byte* request, enum REJECT_REASON reason, byte* data, int length, struct iSCSIBuffer* response);
 
 #endif // __ISCSI_REQUEST_REJECT_H__
