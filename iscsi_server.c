@@ -46,6 +46,7 @@ int iscsi_server_process(
   struct iSCSIConnection* connection,
   struct iSCSIBuffer* response
 ) {
+  logger("PDU size = %d\n", iscsi_pdu_length(request));
   if (!valid_command_numbering(connection, request)) {
     // ignore this PDU
     logger("PDU IGNORE\n");
@@ -65,6 +66,7 @@ int iscsi_server_process(
   }
 
   // has login
+  logger("has login\n");
   switch (iscsi_pdu_opcode(request)) {
     case LOGOUT:
       return iscsi_request_logout_process(request, connection, response);

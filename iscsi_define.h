@@ -1,6 +1,8 @@
 #ifndef __ISCSI_DEFINE_H__
 #define __ISCSI_DEFINE_H__
 
+// variables
+
 #define MAX_SUPPORTED_CONNS 4
 
 #define ISCSI_BUFFER_SIZE 8192

@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "iscsi_connection_parameter.h"
+#include "logger.h"
 
 enum CONNECTION_PARAMETER_SYMBOL {
   EQUAL,
@@ -40,15 +41,15 @@ void iscsi_connection_parameter_update(struct iSCSIConnectionParameter* paramete
   iscsi_connection_parameter_write(parameter, value);
 }
 
-byte* iscsi_connection_parameter_get(struct iSCSIConnectionParameter* parameter, byte* key) {
+byte* iscsi_parameter_get(byte* data, int length, byte* key) {
   enum CONNECTION_PARAMETER_SYMBOL symbol = KEY;
   int count = 0, still_valid = 1;
 
-  for (int i = 0; i < parameter->length; ++i) {
-    symbol = next_key(symbol, parameter->buffer[i]);
+  for (int i = 0; i < length; ++i) {
+    symbol = next_key(symbol, data[i]);
 
     if (symbol == EQUAL && still_valid) {
-      return parameter->buffer + i+1;
+      return data + i+1;
     }
 
     if (symbol == SEPARATOR) {
@@ -57,17 +58,23 @@ byte* iscsi_connection_parameter_get(struct iSCSIConnectionParameter* parameter,
     }
 
     if (symbol == KEY) {
-      if (parameter->buffer[i] == key[count]) {
+      if (data[i] == key[count]) {
         ++count;
       } else {
         still_valid = 0;
       }
     }
   }
-
   return NULL;
 }
 
+byte* iscsi_connection_parameter_get(struct iSCSIConnectionParameter* parameter, byte* key) {
+  return iscsi_parameter_get(parameter->buffer, parameter->length, key);
+}
+
+byte* iscsi_connection_parameter_data(struct iSCSIConnectionParameter* parameter) {
+  return parameter->buffer;
+}
 
 int iscsi_connection_parameter_length(struct iSCSIConnectionParameter* parameter) {
   return parameter->length;

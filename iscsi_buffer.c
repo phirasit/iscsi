@@ -10,9 +10,9 @@ void iscsi_buffer_new(struct iSCSIBuffer* buffer) {
 }
 
 void iscsi_buffer_acquire_lock(struct iSCSIBuffer* buffer) {
-  logger("buffer %p: wait for lock\n", buffer);
+  // logger("buffer %p: wait for lock\n", buffer);
   sem_wait(&buffer->lock);
-  logger("buffer %p: lock acquired\n", buffer);
+  // logger("buffer %p: lock acquired\n", buffer);
 }
 
 byte* iscsi_buffer_acquire_lock_for_length(struct iSCSIBuffer* buffer, int length) {
@@ -32,7 +32,7 @@ start:
 void iscsi_buffer_release_lock(struct iSCSIBuffer* buffer, int offset) {
   buffer->length += offset;
   sem_post(&buffer->lock);
-  logger("buffer %p: lock release\n", buffer);
+  // logger("buffer %p: lock release\n", buffer);
 }
 
 int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length) {

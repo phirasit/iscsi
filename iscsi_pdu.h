@@ -42,9 +42,13 @@ static enum OPCODE iscsi_pdu_opcode(byte* buffer) {
   return buffer[0] & 0x3F;
 }
 
+static inline int iscsi_pdu_padded_length(int length) {
+  return (length + 0x03) & ~0x03;
+}
+
 static inline int iscsi_pdu_calc_size(int total_ahs_length, int data_segment_length) {
   int length = BASIC_HEADER_SEGMENT_LENGTH + total_ahs_length + data_segment_length;
-  return (length + 3) & ~0x03;
+  return iscsi_pdu_padded_length(length);
 }
 
 static inline int iscsi_pdu_ahs_length(byte* buffer) {
@@ -78,6 +82,10 @@ static inline int iscsi_pdu_target_transfer_tag(byte* buffer) {
 }
 
 // PDU information setter
+
+static inline void iscsi_pdu_set_bit(byte* buffer, int bit, int val) {
+  buffer[0] = (buffer[0] & ~(1 << bit)) | (val << bit);
+}
 
 static inline void iscsi_pdu_set_immediate(byte* buffer, int i) {
   buffer[0] = ((i & 0x01) << 6) | (buffer[0] & 0xBF);
@@ -127,5 +135,6 @@ static inline void iscsi_pdu_generate_from_buffer(byte* response, byte* request)
 // function prototype
 
 int iscsi_pdu_valid(byte* pdu, int length);
+void iscsi_pdu_pad0(byte* pdu, int length);
 
 #endif // __ISCSI_PDU_H__

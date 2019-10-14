@@ -48,9 +48,6 @@ int main() {
 
   fprintf(stderr, "Successfully bind socket to port %d\n", TCP_PORT);
 
-  // Create default session
-  iscsi_session_create(&ISCSI_DEFAULT_SESSION);
-
   while (1)
   {
     struct sockaddr client;
@@ -81,7 +78,6 @@ void* start_receiver(void* args) {
   int len, status;
 
   while (1) {
-    logger("file descriptor: %d\n", connection->socket_fd);
     len = recv(connection->socket_fd, buffer, BUFFER_SIZE, 0);
     if (len == -1) {
       logger("error occurrd (code %d): %s\n", errno, strerror(errno));
@@ -118,15 +114,12 @@ void* start_transmit(void* args) {
       break;
     }
   
-    int length = iscsi_pdu_valid(
-      iscsi_buffer_data(buffer),
-      iscsi_buffer_length(buffer)
-    );
-    if (length > 0) {
+    if(iscsi_pdu_valid(iscsi_buffer_data(buffer), iscsi_buffer_length(buffer))) {
+      int length = iscsi_pdu_length(iscsi_buffer_data(buffer));
       logger("transmit length: %d\n", length);
 
       iscsi_buffer_acquire_lock(buffer);
-      send(connection->socket_fd, buffer, length, 0);
+      send(connection->socket_fd, iscsi_buffer_data(buffer), length, 0);
       iscsi_buffer_release_lock(buffer, 0);
 
       iscsi_buffer_flush(buffer, length);

@@ -15,7 +15,9 @@ struct iSCSIBuffer {
 
 void iscsi_buffer_flush(struct iSCSIBuffer* buffer, int length);
 void iscsi_buffer_new(struct iSCSIBuffer* buffer);
+
 int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length);
+void iscsi_buffer_pad(struct iSCSIBuffer* buffer, int length);
 
 void iscsi_buffer_acquire_lock(struct iSCSIBuffer* buffer);
 byte* iscsi_buffer_acquire_lock_for_length(struct iSCSIBuffer* buffer, int length);

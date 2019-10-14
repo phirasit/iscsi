@@ -23,6 +23,16 @@ struct iSCSIConnection {
   int perform_connection_cleanup; // boolean
 };
 
+// static functions
+
+static inline struct iSCSIConnectionParameter* iscsi_connection_get_parameter(
+  struct iSCSIConnection* connection
+) {
+  return &connection->parameter;
+}
+
+// function prototypes 
+
 void iscsi_connection_create(
   struct iSCSIConnection* connection,
   int socket_fd,
