@@ -75,20 +75,20 @@ int iscsi_server_process(
   }
 
   if (connection->session_reference->is_discovery) {
-    return iscsi_request_reject(request, PROTOCOL_ERROR, NULL, 0, response);
+    return iscsi_request_reject(connection, PROTOCOL_ERROR, NULL, 0, response);
   }
 
   switch (iscsi_pdu_opcode(request)) {
     case NOP_OUT:
-      return iscsi_request_nop_out_process(request, response);
+      return iscsi_request_nop_out_process(request, connection, response);
     case SCSI_DATA_OUT:
       return iscsi_request_data_out_process(request, connection, response);
     case SCSI_CMD:
       return iscsi_request_cmd_process(request, connection, response);
     case LOGIN:
-      return iscsi_request_reject(request, PROTOCOL_ERROR, NULL, 0, response);
+      return iscsi_request_reject(connection, PROTOCOL_ERROR, NULL, 0, response);
     default:
-      return iscsi_request_reject(request, CMD_NOT_SUPPORTED, NULL, 0, response);
+      return iscsi_request_reject(connection, CMD_NOT_SUPPORTED, NULL, 0, response);
   }
 }
 

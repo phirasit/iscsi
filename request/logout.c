@@ -1,7 +1,9 @@
+#include "iscsi_byte.h"
 #include "iscsi_connection.h"
 #include "iscsi_session.h"
 #include "iscsi_pdu.h"
 
+#include "request/reject.h"
 #include "request/logout.h"
 
 static inline void iscsi_pdu_request_logout_set_response(byte* buffer, enum LOGOUT_RESPONSE_CODE code) {
@@ -9,19 +11,26 @@ static inline void iscsi_pdu_request_logout_set_response(byte* buffer, enum LOGO
 }
 
 static inline void iscsi_pdu_request_logout_set_time2wait(byte* buffer, int time) {
-  buffer[40] = (time >> 8) & 0xFF;
-  buffer[41] = (time     ) & 0xFF;
+  iscsi_byte_short2byte(buffer + 40, time);
 }
 
 static inline void iscsi_pdu_request_logout_set_time2retain(byte * buffer, int time) {
-  buffer[42] = (time >> 8) & 0xFF;
-  buffer[43] = (time     ) & 0xFF;
+  iscsi_byte_short2byte(buffer + 42, time);
 }
 
 int iscsi_request_logout_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
-  iSCSISession* session = connection->session_reference;
+  struct iSCSISession* session = connection->session_reference;
 
   if (session == NULL) {
+    iscsi_request_reject(
+      connection,
+      PROTOCOL_ERROR,
+      request,
+      BASIC_HEADER_SEGMENT_LENGTH,
+      response
+    );
+
+    return 0;
   }
 
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);

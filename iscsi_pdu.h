@@ -7,6 +7,7 @@
 
 #define BASIC_HEADER_SEGMENT_LENGTH 48
 #define DEFAULT_TRANSFER_TAG 0xFFFFFFFF
+#define DEFAULT_INITIAL_TASK_TAG 0xFFFFFFFF
 
 enum OPCODE {
   NOP_OUT  = 0x00,
@@ -138,6 +139,8 @@ static inline void iscsi_pdu_generate_from_buffer(byte* response, byte* request)
 }
 
 // function prototype
+
+void iscsi_pdu_set_response_header(byte* pdu, struct iSCSIConnection* connection);
 
 int iscsi_pdu_valid(byte* pdu, int length);
 void iscsi_pdu_pad0(byte* pdu, int length);

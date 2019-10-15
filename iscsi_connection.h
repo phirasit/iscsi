@@ -23,12 +23,26 @@ struct iSCSIConnection {
   int perform_connection_cleanup; // boolean
 };
 
-// static functions
+// static inline functions
 
 static inline struct iSCSIConnectionParameter* iscsi_connection_get_parameter(
   struct iSCSIConnection* connection
 ) {
   return &connection->parameter;
+}
+
+static inline int iscsi_connection_stat_sn(struct iSCSIConnection* connection) {
+  return connection->expected_stat_sn;
+}
+
+static inline int iscsi_connection_exp_cmd_sn(struct iSCSIConnection* connection) {
+  // TODO this
+  return connection->expected_stat_sn;
+}
+
+static inline int iscsi_connection_max_cmd_sn(struct iSCSIConnection* connection) {
+  // TODO this
+  return connection->expected_stat_sn;
 }
 
 // function prototypes 

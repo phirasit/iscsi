@@ -1,6 +1,7 @@
 #ifndef __ISCSI_REQUEST_REJECT_H__
 #define __ISCSI_REQUEST_REJECT_H__
 
+#include "iscsi_connection.h"
 #include "iscsi_buffer.h"
 #include "iscsi_type.h"
 
@@ -19,6 +20,6 @@ enum REJECT_REASON {
   WAITING_FOR_LOGOUT = 0x0C
 };
 
-int iscsi_request_reject(byte* request, enum REJECT_REASON reason, byte* data, int length, struct iSCSIBuffer* response);
+int iscsi_request_reject(struct iSCSIConnection* connection, enum REJECT_REASON reason, byte* data, int length, struct iSCSIBuffer* response);
 
 #endif // __ISCSI_REQUEST_REJECT_H__

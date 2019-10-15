@@ -21,4 +21,9 @@ static inline void iscsi_byte_int2byte(byte* buffer, int value) {
   buffer[3] = (value      ) & 0xFF;
 }
 
+static inline void iscsi_byte_short2byte(byte* buffer, int value) {
+  buffer[0] = (value >> 8) & 0xFF;
+  buffer[1] = (value     ) & 0xFF;
+}
+
 #endif // __ISCSI_BYTE_H__
