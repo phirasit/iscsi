@@ -17,7 +17,7 @@ static byte* int_to_byte(int val) {
 }
 
 static inline int iscsi_pdu_text_continue(byte* buffer) {
-  return iscsi_byte_bit(buffer[2], 6);
+  return iscsi_byte_bit(buffer[2], 1);
 }
 
 static inline int iscsi_pdu_text_initiator_task_tag(byte* buffer) {

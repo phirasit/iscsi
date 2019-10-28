@@ -4,7 +4,7 @@
 #include "iscsi_type.h"
 
 static inline int iscsi_byte_bit(byte b, int p) {
-  return (b >> p) & 0x01;
+  return (b >> (7-p)) & 0x01;
 }
 
 static inline int iscsi_byte_byte2int(byte* buffer) {

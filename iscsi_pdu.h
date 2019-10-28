@@ -6,7 +6,7 @@
 #include "iscsi_type.h"
 
 #define BASIC_HEADER_SEGMENT_LENGTH 48
-#define DEFAULT_TRANSFER_TAG 0xFFFFFFFF
+#define DEFAULT_TARGET_TRANSFER_TAG 0xFFFFFFFF
 #define DEFAULT_INITIAL_TASK_TAG 0xFFFFFFFF
 
 enum OPCODE {
@@ -36,7 +36,7 @@ enum OPCODE {
 // PDU information getter
 
 static int iscsi_pdu_immediate(byte* buffer) {
-  return iscsi_byte_bit(buffer[0], 7);
+  return iscsi_byte_bit(buffer[0], 0);
 }
 
 static enum OPCODE iscsi_pdu_opcode(byte* buffer) {
