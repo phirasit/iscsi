@@ -43,6 +43,10 @@ static enum OPCODE iscsi_pdu_opcode(byte* buffer) {
   return buffer[0] & 0x3F;
 }
 
+static int iscsi_pdu_final(byte* buffer) {
+  return iscsi_byte_bit(buffer[1], 0);
+}
+
 static inline int iscsi_pdu_padded_length(int length) {
   return (length + 0x03) & ~0x03;
 }

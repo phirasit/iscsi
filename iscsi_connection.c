@@ -18,7 +18,9 @@ void iscsi_connection_create(
   connection->connection_id = 0;
   // connection->state = STATE_IDLE;
   connection->current_timeout = 0;
-  connection->expected_stat_sn = 0;
+  connection->stat_sn = 0;
+  connection->expected_cmd_sn = 0;
+  connection->max_cmd_sn = ISCSI_MAX_CMD_SN;
   connection->perform_connection_cleanup = 0;
 
   iscsi_buffer_new(&connection->receive_buffer);

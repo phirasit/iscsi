@@ -40,11 +40,9 @@ int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length) 
     return -1;
   }
 
-  byte* ptr = iscsi_buffer_acquire_lock_for_length(buffer, length);
-  memcpy(ptr, receive, length);
+  byte* buffer_data = iscsi_buffer_acquire_lock_for_length(buffer, length);
+  memcpy(buffer_data, receive, length);
   iscsi_buffer_release_lock(buffer, length);
-
-  logger_hex_array(ptr, length);
 
   return 0;
 }

@@ -1,14 +1,59 @@
 #include "iscsi_target.h"
+
+#include "iscsi_buffer.h"
+#include "iscsi_connection.h"
+#include "iscsi_define.h"
 #include "iscsi_pdu.h"
 
-#include "request/r2t.h"
+#include <sys/ioctl.h>
 
-static int min(int a, int b) {
-  return a < b ? a : b;
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include "logger.h"
+
+void iscsi_target_create_default() {
+  struct iSCSITarget* target = &ISCSI_DEFAULT_TARGET;
+  target->address = "/dev/null";
 }
 
+void iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb, struct iSCSIBuffer* response) {
+  int fd = open(target->address, O_RDWR);
+  if (fd < 0) {
+    logger("cannot open: %s", target->address);
+    return;
+  }
+
+  memset(&target->io_hdr, 0, sizeof(sg_io_hdr_t));
+  target->io_hdr.interface_id          = 'S';
+  target->io_hdr.dxfer_direction       = SG_DXFER_TO_DEV; // change to the correct direction
+  target->io_hdr.cmd_len               = SCSI_CDB_LENGTH;
+  target->io_hdr.mx_sb_len             = ISCSI_TARGET_SENSE_BUFFER_SIZE;
+  target->io_hdr.iovec_count           = 0;
+  target->io_hdr.dxfer_len             = ISCSI_TARGET_MEMORY_SIZE; // the length of the data transfer
+  target->io_hdr.dxferp                = (void*) target->buffer;
+  target->io_hdr.cmdp                  = cdb;
+  target->io_hdr.sbp                   = (void*) target->sense_buffer; 
+  target->io_hdr.timeout               = ISCSI_TARGET_TIMEOUT_MS;
+  target->io_hdr.flags                 = SG_FLAG_DIRECT_IO;
+
+  if (ioctl(fd, SG_IO, &target->io_hdr) < 0) {
+    logger("ioctl failed for disk: %s", target->address);
+    close(fd);
+    return;
+  } 
+
+  logger("finish scsi command");
+
+  // TODO create response text
+
+  close(fd);
+}
+
+/*
 void iscsi_target_cmd_get_r2t_pdu(byte* command, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
-  /*
   struct iSCSISession* session = connection->session_reference;
 
   int transfer_tag = iscsi_session_next_transfer_tag(session);
@@ -54,15 +99,15 @@ void iscsi_target_cmd_get_r2t_pdu(byte* command, struct iSCSIConnection* connect
     // commandsToExecute.Add(command);
     iscsi_command_execute_command(command);
   }
-  */
 }
+*/
 
+/*
 void iscsi_target_data_out_get_r2t_pdu(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
-  /*
   struct iSCSISession* session = connection->session_reference;
 
   struct iSCSITransferEntry* transfer_entry = NULL;
-  if (iscsi_pdu_target_transfer_tag(request) != DEFAULT_TRANSFER_TAG) {
+  if (iscsi_pdu_target_transfer_tag(request) != DEFAULT_TARGET_TRANSFER_TAG) {
     transfer_entry = iscsi_connection_get_transfer_entry(connection, iscsi_pdu_target_transfer_tag(request));
   } else if (!iscsi_session_is_initalize_r2t(session)) {
     transfer_entry = iscsi_connection_get_transfer_entry_using_task_tag(connection, iscsi_pdu_initiator_task_tag(request));
@@ -79,14 +124,14 @@ void iscsi_target_data_out_get_r2t_pdu(byte* request, struct iSCSIConnection* co
   // Store segment (we only execute the command after receiving all of its data)
   // Array.Copy(request.Data, 0, transfer.Command.Data, offset, request.DataSegmentLength);
 
-  if (offset + iscsi_pdu_data_length(request) == total_length) {
+  if (offset + iscsi_pdu_data_segment_length(request) == total_length) {
     // last data-out PDU
     iscsi_connection_remove_transfer(
       connection, 
       iscsi_pdu_data_out_initiator_task_tag(request), 
       iscsi_pdu_data_out_target_transfer_tag(request)
     );
-    
+
     // TODO session.CommandsInTransfer.Remove(transfer.Command.CmdSN);
 
     int cmd_sn = iscsi_transfer_entry_cmd_sn(transfer_entry);
@@ -114,5 +159,5 @@ void iscsi_target_data_out_get_r2t_pdu(byte* request, struct iSCSIConnection* co
       iscsi_transfer_entry_increase_next_offset(transfer_entry, iscsi_connection_target_max_receive_data_seg_length(connection));
     }
   }
-  */
 }
+*/

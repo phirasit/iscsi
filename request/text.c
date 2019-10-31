@@ -26,7 +26,7 @@ static inline int iscsi_pdu_text_initiator_task_tag(byte* buffer) {
 
 int iscsi_request_text_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   struct iSCSISession* session = connection->session_reference;
-  struct iSCSIConnectionParameter* parameter = iscsi_connection_get_parameter(connection);
+  struct iSCSIConnectionParameter* parameter = iscsi_session_parameter(session); 
 
   logger("TEXT REQUEST\n");
 

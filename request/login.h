@@ -7,8 +7,6 @@
 #include "iscsi_session.h"
 #include "iscsi_type.h"
 
-#include "target/iscsi_target.h"
-
 enum LOGIN_STATUS {
   SUCCESS = 0x0000,
   TARGET_MOVED_TEMPORARILY = 0x0101,
