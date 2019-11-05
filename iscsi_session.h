@@ -27,7 +27,6 @@ struct iSCSISession {
 
   struct iSCSITarget* target;
   struct iSCSITransferEntry transfer_entry;
-  struct iSCSIConnectionParameter parameter;
   // struct iSCSIConnection* connections[MAX_SUPPORTED_CONNS];
 };
 
@@ -41,10 +40,6 @@ static inline int iscsi_session_full(struct iSCSISession* session) {
 
 static inline struct iSCSITransferEntry* iscsi_session_transfer_entry(struct iSCSISession* session) {
   return &session->transfer_entry;
-}
-
-static inline struct iSCSIConnectionParameter* iscsi_session_parameter(struct iSCSISession* session) {
-  return &session->parameter;
 }
 
 // function prototypes

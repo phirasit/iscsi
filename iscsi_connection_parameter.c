@@ -169,7 +169,7 @@ static inline enum CONNECTION_PARAMETER_SYMBOL next_key(enum CONNECTION_PARAMETE
 
 void iscsi_connection_parameter_update(struct iSCSIConnectionParameter* parameter, byte* key, byte* value) {
   if (parameter->length > 0) {
-    iscsi_connection_parameter_write(parameter, "\0");
+    parameter->buffer[parameter->length++] = '\0';
   }
   iscsi_connection_parameter_write(parameter, key);
   iscsi_connection_parameter_write(parameter, "=");

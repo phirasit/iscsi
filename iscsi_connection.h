@@ -12,6 +12,7 @@ struct iSCSIConnection {
   struct iSCSIBuffer receive_buffer;
   struct iSCSIBuffer response_buffer;
 
+  struct iSCSIConnectionParameter parameter;
   struct iSCSITransferEntry* transfer_entry;
 
   int socket_fd;
@@ -25,6 +26,7 @@ struct iSCSIConnection {
   int max_cmd_sn;
   // int missing_stat_sn_list[MaxMissingSPDU];
   int perform_connection_cleanup; // boolean
+
 };
 
 // static inline functions
@@ -45,6 +47,10 @@ static inline int iscsi_connection_exp_cmd_sn(struct iSCSIConnection* connection
 static inline int iscsi_connection_max_cmd_sn(struct iSCSIConnection* connection) {
   // TODO this
   return connection->max_cmd_sn;
+}
+
+static struct iSCSIConnectionParameter* iscsi_connection_parameter(struct iSCSIConnection* connection) {
+  return &connection->parameter;
 }
 
 // function prototypes 

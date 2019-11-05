@@ -87,7 +87,7 @@ static enum LOGIN_STATUS setup_normal_session(byte* _request, struct iSCSISessio
 }
 
 static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* connection) {
-  struct iSCSIConnectionParameter* parameter = iscsi_session_parameter(connection->session_reference);
+  struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
   if (!iscsi_connection_parameter_get(parameter, "InitiatorName")) {
     logger("no InitiatorName\n");
     return INITIATOR_ERROR;
@@ -189,7 +189,7 @@ static int response_final_with_parameters(struct iSCSIBuffer* response, byte* re
 static int response_final_login(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   static byte security_negotiation_response[] = "AuthMethod=None";
   enum LOGIN_STATUS status = SUCCESS;
-  struct iSCSIConnectionParameter* parameter = iscsi_session_parameter(connection->session_reference);
+  struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
   byte* buffer;
 
   logger("login final pdu_login_csg: %d\n", iscsi_pdu_login_csg(request));
@@ -223,12 +223,14 @@ static int response_final_login(byte* request, struct iSCSIConnection* connectio
         }
       }
 
+      iscsi_connection_parameter_generate_operational_data(parameter);
+
       return response_final_with_parameters(
         response,
         request,
         status,
-        NULL, // TODO iscsi_connection_parameter_operational_data(parameter),
-        0 // TODO iscsi_connection_parameter_operational_length(parameter)
+        iscsi_connection_parameter_data(parameter),
+        iscsi_connection_parameter_length(parameter)
       );
 
     case FULL_FEATURE:
@@ -263,7 +265,7 @@ int iscsi_request_login_process(byte* request, struct iSCSIConnection* connectio
 
   // update parameter 
   iscsi_connection_parameter_create(
-    iscsi_session_parameter(connection->session_reference), 
+    iscsi_connection_parameter(connection),
     iscsi_pdu_data(request),
     iscsi_pdu_data_segment_length(request)
   );

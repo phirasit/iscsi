@@ -17,7 +17,7 @@ static int iscsi_request_data_out_buffer_offest(byte* request) {
 
 int iscsi_request_data_out_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   struct iSCSISession* session = connection->session_reference;
-  struct iSCSIConnectionParameter* parameter = iscsi_session_parameter(session);
+  struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
 
   struct iSCSITransferEntry* transfer_entry = NULL;
   if (iscsi_pdu_target_transfer_tag(request) != DEFAULT_TARGET_TRANSFER_TAG) {
@@ -71,7 +71,7 @@ int iscsi_request_data_out_process(byte* request, struct iSCSIConnection* connec
   } else if (iscsi_pdu_final(request)) {
 
     // send more r2t for more data
-    struct iSCSIConnectionParameter* parameter = iscsi_session_parameter(session);
+    struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
     int max_receive_data_seg_length = iscsi_connection_parameter_max_receive_data_segment_length(parameter);
     int next_r2t_sn = iscsi_transfer_entry_next_r2t_sn(transfer_entry);
     int total_r2t_sn = iscsi_transfer_entry_total_r2t_sn(transfer_entry);

@@ -30,7 +30,7 @@ static byte* iscsi_request_cmd_cdb(byte* request){
 
 int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   struct iSCSISession* session = connection->session_reference;
-  struct iSCSIConnectionParameter* parameter = iscsi_session_parameter(session);
+  struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
 
   int transfer_tag = iscsi_session_next_transfer_tag(session);
 
