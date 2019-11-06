@@ -60,7 +60,7 @@ int iscsi_request_text_process(byte* request, struct iSCSIConnection* connection
   ) != NULL) {
     // return all targets
     // TODO use real value
-    static byte response_text[] = "TargetName=iqn.2019-10.chula.ac.th:iscsi-disk.sn.12345";
+    static byte response_text[] = "TargetName="ISCSI_TARGET_IQN;
     static int text_length = STRLEN(response_text);
 
     int length = BASIC_HEADER_SEGMENT_LENGTH + text_length;
