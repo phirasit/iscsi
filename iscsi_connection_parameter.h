@@ -35,7 +35,7 @@ static inline int iscsi_connection_parameter_initial_r2t(struct iSCSIConnectionP
   return parameter->initial_r2t;
 }
 
-static inline int iscsi_connection_parameter_immeidate_data(struct iSCSIConnectionParameter* parameter) {
+static inline int iscsi_connection_parameter_immediate_data(struct iSCSIConnectionParameter* parameter) {
   return parameter->immediate_data;
 }
 

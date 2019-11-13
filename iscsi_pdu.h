@@ -89,7 +89,7 @@ static inline int iscsi_pdu_target_transfer_tag(byte* buffer) {
 // PDU information setter
 
 static inline void iscsi_pdu_set_bit(byte* buffer, int bit, int val) {
-  buffer[0] = (buffer[0] & ~(1 << bit)) | (val << bit);
+  iscsi_byte_bit2byte(buffer, bit, val);
 }
 
 static inline void iscsi_pdu_set_immediate(byte* buffer, int i) {
@@ -101,7 +101,8 @@ static inline void iscsi_pdu_set_opcode(byte* buffer, int opcode) {
 }
 
 static inline void iscsi_pdu_set_final(byte* buffer, int f) {
-  buffer[1] = ((f & 0x01) << 7) | (buffer[1] & 0x7F); 
+//  buffer[1] = ((f & 0x01) << 7) | (buffer[1] & 0x7F);
+  iscsi_byte_bit2byte(buffer + 1, 0, f);
 }
 
 static inline void iscsi_pdu_set_ahs_length(byte* buffer, int ahs_length) {

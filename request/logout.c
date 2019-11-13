@@ -36,6 +36,7 @@ int iscsi_request_logout_process(byte* request, struct iSCSIConnection* connecti
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
 
   iscsi_pdu_generate_from_buffer(buffer, request);
+  iscsi_pdu_set_immediate(buffer, 1);
   iscsi_pdu_set_opcode(buffer, LOGOUT_RES);
   iscsi_pdu_set_final(buffer, 1);
   iscsi_pdu_request_logout_set_response(buffer, LOGOUT_SUCCESS);

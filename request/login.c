@@ -171,7 +171,7 @@ static int response_final_with_parameters(struct iSCSIBuffer* response, byte* re
 
   iscsi_pdu_generate_from_buffer(buffer, request);
   iscsi_pdu_set_response_header(buffer, connection);
-  iscsi_pdu_set_bit(buffer, 6, 0);
+  iscsi_pdu_set_bit(buffer, 1, 0);
   iscsi_pdu_set_opcode(buffer, LOGIN_RES);
   iscsi_pdu_set_final(buffer, 1);
   iscsi_pdu_login_set_response_status(buffer, status);

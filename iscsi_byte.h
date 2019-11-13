@@ -7,6 +7,11 @@ static inline int iscsi_byte_bit(byte b, int p) {
   return (b >> (7-p)) & 0x01;
 }
 
+static inline void iscsi_byte_bit2byte(byte* buffer, int p, int val) {
+  p = 7 - p;
+  *buffer = ((val & 0x01) << p) | (*buffer & ~(0x01 << p));
+}
+
 static inline int iscsi_byte_byte2int(byte* buffer) {
   return ((int) buffer[0] << 24)
     | ((int) buffer[1] << 16)

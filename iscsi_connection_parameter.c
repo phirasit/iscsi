@@ -97,7 +97,7 @@ void iscsi_connection_parameter_generate_operational_data(struct iSCSIConnection
   parameter->length = 0;
   iscsi_connection_parameter_update(parameter, MAX_CONNECTIONS,        int_to_string(iscsi_connection_parameter_max_connections(parameter)));
   iscsi_connection_parameter_update(parameter, INITIAL_R2T,            bool_to_string(iscsi_connection_parameter_initial_r2t(parameter)));
-  iscsi_connection_parameter_update(parameter, IMMEDIATE_DATA,         bool_to_string(iscsi_connection_parameter_immeidate_data(parameter)));
+  iscsi_connection_parameter_update(parameter, IMMEDIATE_DATA,         bool_to_string(iscsi_connection_parameter_immediate_data(parameter)));
   iscsi_connection_parameter_update(parameter, MAX_BURST_LENGTH,       int_to_string(iscsi_connection_parameter_max_burst_length(parameter)));
   iscsi_connection_parameter_update(parameter, FIRST_BURST_LENGTH,     int_to_string(iscsi_connection_parameter_first_burst_length(parameter)));
   iscsi_connection_parameter_update(parameter, DATA_PDU_IN_ORDER,      bool_to_string(iscsi_connection_parameter_data_pdu_in_order(parameter)));
