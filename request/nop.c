@@ -1,10 +1,15 @@
 #include "request/nop.h"
 
+#include "iscsi_connection_parameter.h"
 #include "iscsi_pdu.h"
 #include "iscsi_server.h"
+#include "iscsi_utility.h"
 
 int iscsi_request_nop_out_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
-  int total_length = iscsi_pdu_length(request);
+  struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
+  int max_receive_data_segment_length = iscsi_connection_parameter_max_receive_data_segment_length(parameter);
+  int data_length = min(max_receive_data_segment_length, iscsi_pdu_data_segment_length(request));
+  int total_length = BASIC_HEADER_SEGMENT_LENGTH + data_length;
 
   // TODO check validity of initiator_task_tag and target_transfer_tag
   int valid = 1;
@@ -12,7 +17,7 @@ int iscsi_request_nop_out_process(byte* request, struct iSCSIConnection* connect
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_length);
 
   iscsi_pdu_set_opcode(buffer, NOP_IN);
-  iscsi_pdu_set_final(buffer, 0);
+  iscsi_pdu_set_final(buffer, 1);
   
   if (valid) {
     iscsi_pdu_set_initiator_task_tag(buffer, iscsi_pdu_initiator_task_tag(request));
@@ -24,7 +29,7 @@ int iscsi_request_nop_out_process(byte* request, struct iSCSIConnection* connect
   }
 
   iscsi_pdu_set_response_header(buffer, connection);
-  iscsi_pdu_set_data_segment(buffer, iscsi_pdu_data(request), iscsi_pdu_data_segment_length(request));
+  iscsi_pdu_set_data_segment(buffer, iscsi_pdu_data(request), data_length);
   iscsi_pdu_pad0(buffer, total_length - BASIC_HEADER_SEGMENT_LENGTH - iscsi_pdu_data_segment_length(request));
 
   iscsi_buffer_release_lock(response, total_length);

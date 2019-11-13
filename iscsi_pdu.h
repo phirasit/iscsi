@@ -138,9 +138,7 @@ static inline int iscsi_pdu_has_cmdSN(byte* buffer) {
     || opcode == LOGOUT;
 }
 
-static inline void iscsi_pdu_generate_from_buffer(byte* response, byte* request) {
-  memcpy(response, request, BASIC_HEADER_SEGMENT_LENGTH);
-}
+void iscsi_pdu_generate_from_buffer(byte* response, byte* request);
 
 // function prototype
 

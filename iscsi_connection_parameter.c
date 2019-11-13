@@ -1,9 +1,10 @@
 #include "iscsi_connection_parameter.h"
 
-#include <stdlib.h>
+#include "iscsi_utility.h"
+
 #include <string.h>
 
-#define MAX_RECEIVE_DATA_SEGEMENT   "MaxRecvDataSegmentLength"
+#define MAX_RECEIVE_DATA_SEGMENT    "MaxRecvDataSegmentLength"
 #define MAX_CONNECTIONS             "MaxConnections"
 #define INITIAL_R2T                 "InitialR2T"
 #define IMMEDIATE_DATA              "ImmediateData"
@@ -17,7 +18,7 @@
 
 
 enum CONNECTION_PARAMETER_SYMBOL {
-  EQUAL,
+  EQUAL = '=',
   KEY,
   SEPARATOR,
   VALUE,
@@ -33,40 +34,8 @@ static int key_equal(byte* key, byte* prop) {
   return 1;
 }
 
-static inline int string_to_int(byte* s) {
-  return atoi((char*) s);
-}
-
-static inline byte* int_to_string(int s) {
-  static byte buffer[20];
-  if (s == 0) {
-    buffer[0] = '0';
-    buffer[1] = 0;
-  } else {
-    int i = s, len = 0;
-    while (i) {
-      ++len;
-      i /= 10;
-    }
-    buffer[len] = 0;
-    while (s) {
-      buffer[--len] = s % 10 + '0';
-      s /= 10;
-    }
-  }
-  return buffer;
-}
-
 static byte* bool_to_string(int b) {
   return b ? "YES" : "NO";
-}
-
-static int min(int a, int b) {
-  return a < b ? a : b;
-}
-
-static int max(int a, int b) {
-  return a > b ? a : b;
 }
 
 static void set_default_parameter(struct iSCSIConnectionParameter* parameter) {
@@ -89,7 +58,7 @@ static inline void iscsi_connection_parameter_write(struct iSCSIConnectionParame
 }
 
 static void update_information(struct iSCSIConnectionParameter* parameter, byte* key, byte* value) {
-  if (key_equal(key, MAX_RECEIVE_DATA_SEGEMENT)) {
+  if (key_equal(key, MAX_RECEIVE_DATA_SEGMENT)) {
     parameter->max_receive_data_segment_length = string_to_int(value);
   }
   if (key_equal(key, MAX_CONNECTIONS)) {
@@ -154,7 +123,9 @@ void iscsi_connection_parameter_create(struct iSCSIConnectionParameter* paramete
       key = data + i;
     }
     if (data[i] == EQUAL) {
-      update_information(parameter, key, data + i + 1);
+      data[i] = 0;
+      update_information(parameter, key, data + i+1);
+      data[i] = EQUAL;
     }
   }
 }
@@ -168,12 +139,10 @@ static inline enum CONNECTION_PARAMETER_SYMBOL next_key(enum CONNECTION_PARAMETE
 }
 
 void iscsi_connection_parameter_update(struct iSCSIConnectionParameter* parameter, byte* key, byte* value) {
-  if (parameter->length > 0) {
-    parameter->buffer[parameter->length++] = '\0';
-  }
   iscsi_connection_parameter_write(parameter, key);
   iscsi_connection_parameter_write(parameter, "=");
   iscsi_connection_parameter_write(parameter, value);
+  parameter->buffer[parameter->length++] = '\0';
   update_information(parameter, key, value);
 }
 

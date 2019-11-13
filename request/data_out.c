@@ -3,15 +3,11 @@
 #include "request/r2t.h"
 #include "iscsi_byte.h"
 #include "iscsi_pdu.h"
+#include "iscsi_logger.h"
 #include "iscsi_transfer_entry.h"
+#include "iscsi_utility.h"
 
-#include "logger.h"
-
-static int min(int a, int b) {
-  return a < b ? a : b;
-}
-
-static int iscsi_request_data_out_buffer_offest(byte* request) {
+static int iscsi_request_data_out_buffer_offset(byte* request) {
   return iscsi_byte_byte2int(request + 40);
 }
 
@@ -35,7 +31,7 @@ int iscsi_request_data_out_process(byte* request, struct iSCSIConnection* connec
     return 0;
   }
 
-  int offset = iscsi_request_data_out_buffer_offest(request);
+  int offset = iscsi_request_data_out_buffer_offset(request);
   int data_length = iscsi_pdu_data_segment_length(request);
   int total_length = iscsi_transfer_entry_data_length(transfer_entry);
 

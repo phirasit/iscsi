@@ -3,18 +3,10 @@
 #include "request/r2t.h"
 
 #include "iscsi_byte.h"
+#include "iscsi_logger.h"
 #include "iscsi_pdu.h"
 #include "iscsi_target.h"
-
-#include "logger.h"
-
-static int min(int a, int b) {
-  return a < b ? a : b;
-}
-
-static int divide_round_up(int a, int b) {
-  return (a + b - 1) / b;
-}
+#include "iscsi_utility.h"
 
 static int iscsi_request_cmd_write(byte* request) {
   return iscsi_byte_bit(request[1], 0);

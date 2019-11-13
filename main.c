@@ -20,7 +20,7 @@
 #include "iscsi_server.h"
 #include "iscsi_pdu.h"
 
-#include "logger.h"
+#include "iscsi_logger.h"
 
 #ifndef TCP_PORT
 #define TCP_PORT 4000

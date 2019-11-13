@@ -1,6 +1,7 @@
 #include "request/login.h"
 
-#include "logger.h"
+#include "iscsi_pdu.h"
+#include "iscsi_logger.h"
 
 extern struct iSCSISession ISCSI_DEFAULT_SESSION;
 extern struct iSCSITarget ISCSI_DEFAULT_TARGET;
@@ -150,9 +151,9 @@ static int response_partial_login(byte* request, struct iSCSIConnection* connect
   logger("partial login\n");
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
   iscsi_pdu_generate_from_buffer(buffer, request);
+  iscsi_pdu_set_response_header(buffer, connection);
   iscsi_pdu_set_opcode(buffer, LOGIN_RES);
   iscsi_pdu_set_final(buffer, 0);
-  // iscsi_pdu_login_set_response_ExpCmdSN(response, iscsi_pdu_login_ExpCmdSN(request));
   if (iscsi_pdu_login_transit(request)) {
     iscsi_pdu_login_set_response_status(buffer, INITIATOR_ERROR);
   } else {
@@ -162,17 +163,19 @@ static int response_partial_login(byte* request, struct iSCSIConnection* connect
   return BASIC_HEADER_SEGMENT_LENGTH;
 }
 
-static int response_final_with_parameters(struct iSCSIBuffer* response, byte* request, enum LOGIN_STATUS status, byte* parameter, int length) {
+static int response_final_with_parameters(struct iSCSIBuffer* response, byte* request, struct iSCSIConnection* connection, enum LOGIN_STATUS status, byte* parameter, int length) {
   int total_packet_size = BASIC_HEADER_SEGMENT_LENGTH + length;
   int total_padded_size = iscsi_pdu_padded_length(total_packet_size);
 
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_padded_size);
 
   iscsi_pdu_generate_from_buffer(buffer, request);
+  iscsi_pdu_set_response_header(buffer, connection);
   iscsi_pdu_set_bit(buffer, 6, 0);
   iscsi_pdu_set_opcode(buffer, LOGIN_RES);
   iscsi_pdu_set_final(buffer, 1);
   iscsi_pdu_login_set_response_status(buffer, status);
+  iscsi_pdu_login_set_TSIH(buffer, connection->session_reference->TSIH);
   iscsi_pdu_set_data_segment_length(buffer, length);
   iscsi_pdu_pad0(buffer, total_packet_size);
 
@@ -207,6 +210,7 @@ static int response_final_login(byte* request, struct iSCSIConnection* connectio
       return response_final_with_parameters(
         response,
         request,
+        connection,
         status,
         security_negotiation_response,
         strlen(security_negotiation_response)
@@ -228,6 +232,7 @@ static int response_final_login(byte* request, struct iSCSIConnection* connectio
       return response_final_with_parameters(
         response,
         request,
+        connection,
         status,
         iscsi_connection_parameter_data(parameter),
         iscsi_connection_parameter_length(parameter)

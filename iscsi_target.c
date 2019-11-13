@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "logger.h"
+#include "iscsi_logger.h"
 
 void iscsi_target_create_default() {
   struct iSCSITarget* target = &ISCSI_DEFAULT_TARGET;

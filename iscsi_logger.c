@@ -1,4 +1,4 @@
-#include "logger.h"
+#include "iscsi_logger.h"
 #include "iscsi_define.h"
 
 #define BYTE_PER_LINE 16

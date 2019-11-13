@@ -4,10 +4,9 @@
 #include <string.h>
 
 #include "iscsi_byte.h"
+#include "iscsi_logger.h"
 #include "iscsi_pdu.h"
 #include "iscsi_session.h"
-
-#include "logger.h"
 
 // TODO change to proper function
 static byte* int_to_byte(int val) {

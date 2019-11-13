@@ -46,7 +46,7 @@ static inline int iscsi_connection_exp_cmd_sn(struct iSCSIConnection* connection
 
 static inline int iscsi_connection_max_cmd_sn(struct iSCSIConnection* connection) {
   // TODO this
-  return connection->max_cmd_sn;
+  return connection->expected_cmd_sn + 1; // only one PDU at a time
 }
 
 static struct iSCSIConnectionParameter* iscsi_connection_parameter(struct iSCSIConnection* connection) {

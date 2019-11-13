@@ -1,6 +1,7 @@
 #include "iscsi_buffer.h"
-#include "logger.h"
+#include "iscsi_logger.h"
 
+#include <string.h>
 #include <semaphore.h>
 #include <unistd.h>
 
@@ -26,6 +27,7 @@ start:
     sleep(50);
     goto start;
   }
+  memset(buffer->data + buffer->length, 0, length);
   return buffer->data + buffer->length;
 }
 

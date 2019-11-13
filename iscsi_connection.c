@@ -4,7 +4,7 @@
 #include "iscsi_server.h"
 #include "iscsi_pdu.h"
 
-#include "logger.h"
+#include "iscsi_logger.h"
 
 // Connection 
 void iscsi_connection_create(

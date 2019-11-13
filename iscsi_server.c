@@ -11,7 +11,7 @@
 #include "request/reject.h"
 #include "request/text.h"
 
-#include "logger.h"
+#include "iscsi_logger.h"
 
 static int valid_command_numbering(struct iSCSIConnection* connection, byte* buffer) {
   struct iSCSISession* session = connection->session_reference;

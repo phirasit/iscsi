@@ -11,7 +11,9 @@ void iscsi_session_create(struct iSCSISession* session) {
   session->num_connections = 0;
   session->max_connections = MAX_SUPPORTED_CONNS;
 
-  session->ExpCmdSN = 500;
+  session->TSIH = ISCSI_SESSION_DEFAULT_TSIH;
+
+  session->ExpCmdSN = 0;
   session->error_recovery_level = 0;
   session->target = NULL;
 
