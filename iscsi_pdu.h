@@ -10,27 +10,27 @@
 #define DEFAULT_INITIAL_TASK_TAG 0xFFFFFFFF
 
 enum OPCODE {
-  NOP_OUT  = 0x00,
-  SCSI_CMD = 0x01,
-  SCSI_TASK_MANAGE_REQ = 0x02,
-  LOGIN    = 0x03,
-  TEXT     = 0x04,
-  SCSI_DATA_OUT = 0x05,
-  LOGOUT   = 0x06,
-  SNACK    = 0x07,
+  NOP_OUT                = 0x00,
+  SCSI_CMD               = 0x01,
+  SCSI_TASK_MANAGE       = 0x02,
+  LOGIN                  = 0x03,
+  TEXT                   = 0x04,
+  SCSI_DATA_OUT          = 0x05,
+  LOGOUT                 = 0x06,
+  SNACK                  = 0x07,
 
-  NOP_IN    = 0x20,
-  SCSI_RES  = 0x21,
-  SCSI_TASK_MANAGE_RES = 0x22,
-  LOGIN_RES = 0x23,
-  TEXT_RES  = 0x24,
-  SCSI_DATA_IN = 0x25,
-  LOGOUT_RES = 0x26,
+  NOP_IN                 = 0x20,
+  SCSI_CMD_RES           = 0x21,
+  SCSI_TASK_MANAGE_RES   = 0x22,
+  LOGIN_RES              = 0x23,
+  TEXT_RES               = 0x24,
+  SCSI_DATA_IN           = 0x25,
+  LOGOUT_RES             = 0x26,
 
-  R2T = 0x31,
-  ASYNC_MSG = 0x32,
+  R2T                    = 0x31,
+  ASYNC_MSG              = 0x32,
 
-  REJECT = 0x3f
+  REJECT                 = 0x3f
 };
 
 // PDU information getter

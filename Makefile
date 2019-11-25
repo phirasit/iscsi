@@ -9,7 +9,7 @@ SRC_DIR=./ ./request
 SRC=$(wildcard *.c) $(wildcard request/*.c)
 OBJ=$(addprefix ./$(TARGET_DIR)/,$(SRC:.c=.o))
 
-all: pre-build target
+all: clean pre-build target
 	
 pre-build:
 	mkdir -p $(TARGET_DIR)

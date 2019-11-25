@@ -7,6 +7,8 @@
 
 #include <string.h>
 
+extern struct iSCSITarget ISCSI_DEFAULT_TARGET;
+
 void iscsi_session_create(struct iSCSISession* session) {
   session->num_connections = 0;
   session->max_connections = MAX_SUPPORTED_CONNS;
@@ -15,9 +17,10 @@ void iscsi_session_create(struct iSCSISession* session) {
 
   session->ExpCmdSN = 0;
   session->error_recovery_level = 0;
-  session->target = NULL;
 
   session->transfer_tag = 0;
+  session->target = &ISCSI_DEFAULT_TARGET;
+  iscsi_target_create_default(session->target);
   // memset(session->connections, 0, sizeof(struct Connection*) * MAX_SUPPORTED_CONNS);
 }
 
@@ -38,7 +41,7 @@ struct iSCSITransferEntry* iscsi_session_get_transfer_entry(struct iSCSISession*
   }
 }
 
-void iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struct iSCSIBuffer* response) {
+int iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struct iSCSIBuffer* response) {
   /*
   // TODO add delay command to fasten the process
   if (iscsi_session_is_preceeding_command_pending(session, iscsi_command_cmd_sn(command))) {
@@ -50,14 +53,14 @@ void iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, stru
   }
   */
 
-  iscsi_target_execute_scsi_command(session->target, cdb, response);
+  return iscsi_target_execute_scsi_command(session->target, cdb);
 }
 
-void iscsi_session_execute_transfer_entry(struct iSCSISession* session, struct iSCSITransferEntry* entry, struct iSCSIBuffer* response) {
+int iscsi_session_execute_transfer_entry(struct iSCSISession* session, struct iSCSITransferEntry* entry, struct iSCSIBuffer* response) {
   // TODO this
   struct iSCSITarget* target = session->target;
   memcpy(iscsi_target_buffer(target), iscsi_transfer_entry_data(entry), iscsi_transfer_entry_data_length(entry));
-  iscsi_session_execute_command(session, iscsi_transfer_entry_cdb(entry), response);
+  return iscsi_session_execute_command(session, iscsi_transfer_entry_cdb(entry), response);
 }
 
 /*

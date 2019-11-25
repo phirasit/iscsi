@@ -22,23 +22,21 @@ int iscsi_request_logout_process(byte* request, struct iSCSIConnection* connecti
   struct iSCSISession* session = connection->session_reference;
 
   if (session == NULL) {
-    iscsi_request_reject(
+    return iscsi_request_reject(
       connection,
       PROTOCOL_ERROR,
       request,
       BASIC_HEADER_SEGMENT_LENGTH,
       response
     );
-
-    return 0;
   }
 
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
 
-  iscsi_pdu_generate_from_buffer(buffer, request);
   iscsi_pdu_set_immediate(buffer, 1);
   iscsi_pdu_set_opcode(buffer, LOGOUT_RES);
   iscsi_pdu_set_final(buffer, 1);
+  iscsi_pdu_set_response_header(buffer, connection);
   iscsi_pdu_request_logout_set_response(buffer, LOGOUT_SUCCESS);
   iscsi_pdu_request_logout_set_time2wait(buffer, 0);
   iscsi_pdu_request_logout_set_time2retain(buffer, 0);

@@ -38,6 +38,10 @@ static inline int iscsi_session_full(struct iSCSISession* session) {
   return session->num_connections >= session->max_connections;
 }
 
+static inline struct iSCSITarget* iscsi_session_target(struct iSCSISession* session) {
+  return session->target;
+}
+
 static inline struct iSCSITransferEntry* iscsi_session_transfer_entry(struct iSCSISession* session) {
   return &session->transfer_entry;
 }
@@ -51,7 +55,7 @@ int iscsi_session_next_transfer_tag(struct iSCSISession* session);
 
 struct iSCSITransferEntry* iscsi_session_get_transfer_entry(struct iSCSISession* session, int target_transfer_tag);
 
-void iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struct iSCSIBuffer* response);
-void iscsi_session_execute_transfer_entry(struct iSCSISession* session, struct iSCSITransferEntry* entry, struct iSCSIBuffer* response);
+int iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struct iSCSIBuffer* response);
+int iscsi_session_execute_transfer_entry(struct iSCSISession* session, struct iSCSITransferEntry* entry, struct iSCSIBuffer* response);
 
 #endif // __ISCSI_SESSION_H__

@@ -7,9 +7,6 @@
 #include <scsi/sg.h>
 #include <scsi/scsi.h>
 
-struct iSCSIBuffer;
-struct iSCSIConnection;
-
 struct iSCSITarget {
   char* address;
   sg_io_hdr_t io_hdr;
@@ -25,10 +22,13 @@ static inline byte* iscsi_target_buffer(struct iSCSITarget* target) {
   return target->buffer;
 }
 
+static inline sg_io_hdr_t* iscsi_target_sg_io_hdr(struct iSCSITarget* target) {
+  return &target->io_hdr;
+}
 // function prototypes
 
-void iscsi_create_default(void);
-void iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb, struct iSCSIBuffer* response);
+void iscsi_target_create_default(struct iSCSITarget* target);
+int iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb);
 
 // DEPRICATE
 // void iscsi_target_cmd_get_r2t_pdu(byte* command, struct iSCSIConnection* connection, struct iSCSIBuffer* response);

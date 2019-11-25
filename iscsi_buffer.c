@@ -51,7 +51,7 @@ int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length) 
 
 void iscsi_buffer_flush(struct iSCSIBuffer* buffer, int length) {
   iscsi_buffer_acquire_lock(buffer);
-  logger_hex_array(buffer->data, length);
+  // logger_hex_array(buffer->data, length);
   memcpy(buffer->data, buffer->data + length, buffer->length - length);
   iscsi_buffer_release_lock(buffer, -length);
 }

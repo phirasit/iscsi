@@ -78,6 +78,7 @@ int iscsi_server_process(
     return iscsi_request_reject(connection, PROTOCOL_ERROR, NULL, 0, response);
   }
 
+  logger("Opcode = %d\n", iscsi_pdu_opcode(request));
   switch (iscsi_pdu_opcode(request)) {
     case NOP_OUT:
       return iscsi_request_nop_out_process(request, connection, response);
