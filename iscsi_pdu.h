@@ -36,7 +36,7 @@ enum OPCODE {
 // PDU information getter
 
 static int iscsi_pdu_immediate(byte* buffer) {
-  return iscsi_byte_bit(buffer[0], 0);
+  return iscsi_byte_byte2bit(buffer[0], 0);
 }
 
 static enum OPCODE iscsi_pdu_opcode(byte* buffer) {
@@ -44,7 +44,7 @@ static enum OPCODE iscsi_pdu_opcode(byte* buffer) {
 }
 
 static int iscsi_pdu_final(byte* buffer) {
-  return iscsi_byte_bit(buffer[1], 0);
+  return iscsi_byte_byte2bit(buffer[1], 0);
 }
 
 static inline int iscsi_pdu_padded_length(int length) {

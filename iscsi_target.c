@@ -21,11 +21,11 @@ void iscsi_target_create_default(struct iSCSITarget* target) {
 int iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb) {
   int fd = open(target->address, O_RDWR);
   if (fd < 0) {
-    logger("cannot open: %s\n", target->address);
+    logger("[TARGET] Cannot open: %s\n", target->address);
     return 1;
   }
 
-  logger("Connecting to %s\n", target->address);
+  logger("[TARGET] Connecting to %s\n", target->address);
   memset(&target->io_hdr, 0, sizeof(sg_io_hdr_t));
   target->io_hdr = (sg_io_hdr_t) {
     .interface_id          = 'S',
@@ -42,12 +42,12 @@ int iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb) {
   };
 
   if (ioctl(fd, SG_IO, &target->io_hdr) < 0) {
-    logger("ioctl failed in disk: %s\n", target->address);
+    logger("[TARGET] ioctl failed in disk: %s\n", target->address);
     close(fd);
     return 1;
   } 
 
-  logger("finish scsi command with status = %d\n", target->io_hdr.status);
+  logger("[TARGET] finish scsi command with status = %d\n", target->io_hdr.status);
   close(fd);
   
   return 0;

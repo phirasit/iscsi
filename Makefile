@@ -6,10 +6,11 @@ TARGET=iscsi
 TARGET_DIR=bin
 
 SRC_DIR=./ ./request
+HEADER=$(wildcard *.h) $(wildcard request/*.h)
 SRC=$(wildcard *.c) $(wildcard request/*.c)
 OBJ=$(addprefix ./$(TARGET_DIR)/,$(SRC:.c=.o))
 
-all: clean pre-build target
+all: pre-build target
 	
 pre-build:
 	mkdir -p $(TARGET_DIR)
@@ -18,7 +19,7 @@ pre-build:
 target: $(OBJ)
 	$(CC) -I $(INCLUDE_DIR) $(CFLAGS) $(OBJ) -o ./$(TARGET)
 
-$(TARGET_DIR)/%.o: %.c
+$(TARGET_DIR)/%.o: %.c $(HEADER)
 	$(CC) -I $(INCLUDE_DIR) $(CFLAGS) -c $< -o $@
 
 clean:

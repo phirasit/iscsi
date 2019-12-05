@@ -90,7 +90,7 @@ static enum LOGIN_STATUS setup_normal_session(byte* _request, struct iSCSISessio
 static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* connection) {
   struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
   if (!iscsi_connection_parameter_get(parameter, "InitiatorName")) {
-    logger("no InitiatorName\n");
+    logger("[LOGIN] No InitiatorName in the parameter\n");
     return INITIATOR_ERROR;
   }
 
@@ -148,7 +148,7 @@ static enum LOGIN_STATUS setup_session(byte* request, struct iSCSIConnection* co
 }
 
 static int response_partial_login(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
-  logger("partial login\n");
+  logger("[LOGIN] Entering partial login\n");
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, BASIC_HEADER_SEGMENT_LENGTH);
   iscsi_pdu_generate_from_buffer(buffer, request);
   iscsi_pdu_set_response_header(buffer, connection);
@@ -195,7 +195,7 @@ static int response_final_login(byte* request, struct iSCSIConnection* connectio
   struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
   byte* buffer;
 
-  logger("login final pdu_login_csg: %d\n", iscsi_pdu_login_csg(request));
+  logger("[LOGIN] Final with pdu_login_csg: %d\n", iscsi_pdu_login_csg(request));
   switch (iscsi_pdu_login_csg(request)) {
     case SECURITY_NEGOTIATION:
       if (iscsi_pdu_login_transit(request)) {
@@ -221,7 +221,7 @@ static int response_final_login(byte* request, struct iSCSIConnection* connectio
       if (iscsi_pdu_login_transit(request)) {
         if (iscsi_pdu_login_nsg(request) == FULL_FEATURE) {
           connection->session_reference->is_full_feature_phase = 1;
-          logger("is_full_feature_phase\n");
+          logger("[LOGIN] now session has now enter full feature phase\n");
         } else {
           status = INITIATOR_ERROR;
         }
@@ -266,7 +266,7 @@ int iscsi_request_login_reject(byte* request, struct iSCSIConnection* connection
 }
 
 int iscsi_request_login_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
-  logger("login process\n");
+  logger("[LOGIN] Start login process\n");
 
   // update parameter 
   iscsi_connection_parameter_create(

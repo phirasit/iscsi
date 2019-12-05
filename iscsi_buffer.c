@@ -34,7 +34,7 @@ start:
 void iscsi_buffer_release_lock(struct iSCSIBuffer* buffer, int offset) {
   buffer->length += offset;
   sem_post(&buffer->lock);
-  // logger("buffer %p: lock release\n", buffer);
+  logger("[BUFFER] %p: lock release with offset %d\n", buffer, offset);
 }
 
 int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length) {

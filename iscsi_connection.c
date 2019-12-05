@@ -31,8 +31,8 @@ int incoming_request(struct iSCSIConnection* connection, byte* buffer, int lengt
   struct iSCSIBuffer* receiver = &connection->receive_buffer;
 
   int error = iscsi_buffer_receive(receiver, buffer, length);
-  logger("current receive buffer size = %d\n", iscsi_buffer_length(receiver));
-  logger("current pdu size = %d\n", iscsi_pdu_length(iscsi_buffer_data(receiver)));
+  // logger("current receive buffer size = %d\n", iscsi_buffer_length(receiver));
+  // logger("current pdu size = %d\n", iscsi_pdu_length(iscsi_buffer_data(receiver)));
   if (error) return error;
 
   if (!iscsi_pdu_valid(iscsi_buffer_data(receiver), iscsi_buffer_length(receiver))) {

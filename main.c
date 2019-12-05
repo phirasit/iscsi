@@ -35,8 +35,10 @@ int main() {
   // Create Socket
   int socket_desc;
   socket_desc = socket(AF_INET,SOCK_STREAM, 0);
-  if (socket_desc == -1)
-    perror("Cannot create socket");
+  if (socket_desc == -1) {
+    perror("[MAIN] Cannot create socket");
+    return 1;
+  }
 
   struct sockaddr_in address;
   address.sin_family = AF_INET;
@@ -46,7 +48,8 @@ int main() {
   bind(socket_desc, (struct sockaddr *) &address, sizeof(address));
   listen(socket_desc, 32);
 
-  fprintf(stderr, "Successfully bind socket to port %d\n", TCP_PORT);
+  logger("[MAIN] Successfully bind socket to port %d\n", TCP_PORT);
+  logger("############################################\n");
 
   while (1)
   {
@@ -80,16 +83,17 @@ void* start_receiver(void* args) {
   while (1) {
     len = recv(connection->socket_fd, buffer, BUFFER_SIZE, 0);
     if (len == -1) {
-      logger("error occurrd (code %d): %s\n", errno, strerror(errno));
+      logger("[MAIN] error occurrd (code %d): %s\n", errno, strerror(errno));
       break;
     }
     if (len == 0) break; // connection close
 
-    logger("receive data length %d bytes\n", len);
+    logger("[MAIN] receive data length %d bytes\n", len);
 
     status = incoming_request(connection, buffer, len);
 
-    logger("finish process with status = %d\n", status);
+    logger("[MAIN] finish process with status = %d\n", status);
+    logger("########################################\n");
 
     switch (status) {
       case SOCKET_TERMINATE: goto end; 
@@ -98,7 +102,7 @@ void* start_receiver(void* args) {
     usleep(10000);
   }
 end:
-  logger("connection closed\n");
+  logger("[MAIN] Connection closed\n");
   close(connection->socket_fd);
   // TODO change state to terminated
 }
@@ -116,9 +120,11 @@ void* start_transmit(void* args) {
   
     if(iscsi_pdu_valid(iscsi_buffer_data(buffer), iscsi_buffer_length(buffer))) {
       int length = iscsi_pdu_length(iscsi_buffer_data(buffer));
-      logger("transmit length: %d\n", length);
+      logger("[MAIN] Transmit PDU of length: %d\n", length);
 
       iscsi_buffer_acquire_lock(buffer);
+      logger("[MAIN] PDU Data:\n");
+      logger_hex_array(iscsi_buffer_data(buffer), length);
       send(connection->socket_fd, iscsi_buffer_data(buffer), length, 0);
       iscsi_buffer_release_lock(buffer, 0);
 
@@ -127,17 +133,17 @@ void* start_transmit(void* args) {
     usleep(10000);
   }
 
-  logger("transmission closed\n");
+  logger("[MAIN] Closed transmission\n");
 }
 
 void start_connection(struct iSCSIConnection* connection) {
   pthread_t receive_thread, transmit_thread;
   int stat1 = pthread_create(&receive_thread, NULL, start_receiver, (void*) connection);
   if (stat1) {
-    logger("failed to start receiver thread\n");
+    logger("[MAIN] Failed to start receiver thread\n");
   }
   int stat2 = pthread_create(&transmit_thread, NULL, start_transmit, (void*) connection);
   if (stat2) {
-    logger("failed to start transmit thread\n");
+    logger("[MAIN] Failed to start transmit thread\n");
   }
 }

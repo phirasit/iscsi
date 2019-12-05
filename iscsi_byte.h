@@ -3,7 +3,7 @@
 
 #include "iscsi_type.h"
 
-static inline int iscsi_byte_bit(byte b, int p) {
+static inline int iscsi_byte_byte2bit(byte b, int p) {
   return (b >> (7-p)) & 0x01;
 }
 

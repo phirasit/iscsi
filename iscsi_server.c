@@ -46,16 +46,17 @@ int iscsi_server_process(
   struct iSCSIConnection* connection,
   struct iSCSIBuffer* response
 ) {
-  logger("PDU size = %d\n", iscsi_pdu_length(request));
+  logger("[SERVER] Start PDU Processing\n");
+  logger("[SERVER] PDU size = %d\n", iscsi_pdu_length(request));
   if (!valid_command_numbering(connection, request)) {
     // ignore this PDU
-    logger("PDU IGNORE\n");
+    logger("[SERVER] PDU IGNORE\n");
     return PDU_IGNORE;
   }
 
   // not login
   if (connection->session_reference == NULL || !connection->session_reference->is_full_feature_phase) {
-    logger("not login\n");
+    logger("[SERVER] Session has NOT been logined\n");
     if (iscsi_pdu_opcode(request) == LOGIN) {
       return iscsi_request_login_process(request, connection, response);
     }
@@ -66,7 +67,8 @@ int iscsi_server_process(
   }
 
   // has login
-  logger("has login\n");
+  logger("[SERVER] Session has been logined\n");
+  logger("[SERVER] PDU opcode = %d\n", iscsi_pdu_opcode(request));
   switch (iscsi_pdu_opcode(request)) {
     case LOGOUT:
       return iscsi_request_logout_process(request, connection, response);
@@ -78,7 +80,6 @@ int iscsi_server_process(
     return iscsi_request_reject(connection, PROTOCOL_ERROR, NULL, 0, response);
   }
 
-  logger("Opcode = %d\n", iscsi_pdu_opcode(request));
   switch (iscsi_pdu_opcode(request)) {
     case NOP_OUT:
       return iscsi_request_nop_out_process(request, connection, response);
