@@ -32,6 +32,9 @@ void start_connection(struct iSCSIConnection* connection);
 
 int main() {
 
+  logger_line();
+  logger("[MAIN] Start ISCSI server\n");
+
   // Create Socket
   int socket_desc;
   socket_desc = socket(AF_INET,SOCK_STREAM, 0);
@@ -49,7 +52,7 @@ int main() {
   listen(socket_desc, 32);
 
   logger("[MAIN] Successfully bind socket to port %d\n", TCP_PORT);
-  logger("############################################\n");
+  logger_line();
 
   while (1)
   {
@@ -93,7 +96,7 @@ void* start_receiver(void* args) {
     status = incoming_request(connection, buffer, len);
 
     logger("[MAIN] finish process with status = %d\n", status);
-    logger("########################################\n");
+    logger_line();
 
     switch (status) {
       case SOCKET_TERMINATE: goto end; 
@@ -123,8 +126,8 @@ void* start_transmit(void* args) {
       logger("[MAIN] Transmit PDU of length: %d\n", length);
 
       iscsi_buffer_acquire_lock(buffer);
-      logger("[MAIN] PDU Data:\n");
-      logger_hex_array(iscsi_buffer_data(buffer), length);
+      // logger("[MAIN] PDU Data:\n");
+      // logger_hex_array(iscsi_buffer_data(buffer), length);
       send(connection->socket_fd, iscsi_buffer_data(buffer), length, 0);
       iscsi_buffer_release_lock(buffer, 0);
 

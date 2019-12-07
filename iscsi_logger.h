@@ -7,6 +7,7 @@
 #include "iscsi_type.h"
 
 int logger(char* format, ...);
+void logger_line(void);
 void logger_hex_array(byte* buffer, int length);
 
 #endif // __ISCSI_LOGGER_H__

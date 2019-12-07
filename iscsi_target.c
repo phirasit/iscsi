@@ -29,7 +29,8 @@ int iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb) {
   memset(&target->io_hdr, 0, sizeof(sg_io_hdr_t));
   target->io_hdr = (sg_io_hdr_t) {
     .interface_id          = 'S',
-    .dxfer_direction       = SG_DXFER_TO_DEV, // change to the correct direction
+    // .dxfer_direction       = SG_DXFER_TO_DEV, // change to the correct direction
+    .dxfer_direction       = SG_DXFER_TO_FROM_DEV, // temporary
     .cmd_len               = SCSI_CDB_LENGTH,
     .mx_sb_len             = ISCSI_TARGET_SENSE_BUFFER_SIZE,
     .iovec_count           = 0,

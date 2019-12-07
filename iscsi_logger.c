@@ -16,6 +16,10 @@ int logger(char* format, ...) {
 #endif
 }
 
+void logger_line(void) {
+  logger("############################################\n");
+}
+
 void logger_hex_array(byte* buffer, int length) {
 #ifndef PRODUCTION
   for (int i = 0; i < length; ++i) {

@@ -35,12 +35,15 @@ static inline void iscsi_connection_advance_stat_sn(struct iSCSIConnection* conn
   connection->stat_sn++;
 }
 
+static inline void iscsi_connection_advance_expected_cmd_sn(struct iSCSIConnection* connection) {
+  connection->expected_cmd_sn++;
+}
+
 static inline int iscsi_connection_stat_sn(struct iSCSIConnection* connection) {
   return connection->stat_sn;
 }
 
 static inline int iscsi_connection_exp_cmd_sn(struct iSCSIConnection* connection) {
-  // TODO this
   return connection->expected_cmd_sn;
 }
 

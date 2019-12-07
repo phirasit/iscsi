@@ -7,6 +7,9 @@
 #include "iscsi_utility.h"
 
 static inline void iscsi_request_data_in_set_status(byte* buffer, byte S) {
+  // set scsi status bit
+  iscsi_byte_bit2byte(buffer + 1, 7, 1);
+  // set status value
   buffer[3] = S;
 }
 
@@ -39,6 +42,10 @@ void iscsi_request_data_in_send(int initiator_task_tag, int expected_data_transf
 
   int offset = 0;
   for (int i = 0; i < num_pdu; ++i) {
+    // advance stat sn
+    iscsi_connection_advance_stat_sn(connection);
+
+    // create pdu
     int data_length = min(expected_data_transfer_length - offset, max_receive_length);
     int final = offset + data_length == expected_data_transfer_length;
     int pdu_length = BASIC_HEADER_SEGMENT_LENGTH + data_length;
