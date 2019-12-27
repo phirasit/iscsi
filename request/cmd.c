@@ -10,36 +10,61 @@
 
 #include <scsi/scsi.h>
 
-static int iscsi_request_cmd_read(byte* request) {
+static inline int iscsi_request_cmd_read(byte* request) {
   return iscsi_byte_byte2bit(request[1], 1);
 }
 
-static int iscsi_request_cmd_write(byte* request) {
+static inline int iscsi_request_cmd_write(byte* request) {
   return iscsi_byte_byte2bit(request[1], 2);
 }
 
-static int iscsi_request_cmd_exp_data_transfer(byte* request) {
+static inline int iscsi_request_cmd_exp_data_transfer(byte* request) {
   return iscsi_byte_byte2int(request + 20);
 }
 
-static byte* iscsi_request_cmd_cdb(byte* request){ 
+static inline byte* iscsi_request_cmd_cdb(byte* request){ 
   return request + 32;
 }
 
-static void iscsi_request_cmd_set_response(byte* buffer, int response) {
+static inline void iscsi_request_cmd_set_response(byte* buffer, int response) {
   buffer[2] = (byte) response;
 }
 
-static void iscsi_request_cmd_set_status(byte* buffer, int status) {
+static inline void iscsi_request_cmd_set_status(byte* buffer, int status) {
   buffer[3] = (byte) status;
 }
 
-static void iscsi_request_cmd_set_sense_buffer(byte* buffer, byte* sense_buffer, int length) {
+static inline void iscsi_request_cmd_set_sense_buffer(byte* buffer, byte* sense_buffer, int length) {
   iscsi_pdu_set_data_segment_length(buffer, 2 + length);
   iscsi_byte_short2byte(buffer + BASIC_HEADER_SEGMENT_LENGTH, length);
   memcpy(buffer + (BASIC_HEADER_SEGMENT_LENGTH + 2), sense_buffer, length);
 }
 
+static int iscsi_request_cmd_send_response(struct iSCSIConnection* connection, byte* request, int scsi_response, struct iSCSIBuffer* response) {
+  struct iSCSISession* session = connection->session_reference;
+
+  // advance stat sn
+  iscsi_connection_advance_stat_sn(connection);
+
+  // data from target
+  struct iSCSITarget* target = iscsi_session_target(session);
+  sg_io_hdr_t* io_hdr = iscsi_target_sg_io_hdr(target);
+  int target_status = io_hdr->status;
+  int sense_buffer_length = io_hdr->sb_len_wr;
+  byte* sense_buffer = (byte*) io_hdr->sbp;
+
+  int total_length = iscsi_pdu_calc_size(0, 2 + sense_buffer_length);
+  byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_length);
+  iscsi_pdu_set_opcode(buffer, SCSI_CMD_RES);
+  iscsi_pdu_set_final(buffer, 1);
+  iscsi_request_cmd_set_response(buffer, scsi_response);
+  iscsi_request_cmd_set_status(buffer, target_status);
+  iscsi_pdu_set_initiator_task_tag(buffer, iscsi_pdu_initiator_task_tag(request));
+  iscsi_request_cmd_set_sense_buffer(buffer, sense_buffer, sense_buffer_length); // write sense buffer
+  iscsi_pdu_set_response_header(buffer, connection);
+
+  iscsi_buffer_release_lock(response, total_length);
+}
 int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   // advance expected cmd sn
   iscsi_connection_advance_expected_cmd_sn(connection);
@@ -96,7 +121,6 @@ int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection,
     }
 
     // TODO return success status
-    
     return 0;
   }
 
@@ -106,33 +130,12 @@ int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection,
   // TODO change allocate memory to expect_data_transfer_length
   int scsi_response = iscsi_session_execute_command(session, iscsi_request_cmd_cdb(request), response);
 
-
   if (iscsi_request_cmd_read(request)) {
     struct iSCSITarget* target = iscsi_session_target(session);
     int initiator_task_tag = iscsi_pdu_initiator_task_tag(request);
-    iscsi_request_data_in_send(initiator_task_tag, expect_data_transfer_length, connection, target, response);
+    iscsi_request_data_in_send(connection, initiator_task_tag, expect_data_transfer_length, target, response);
   } else {
-    // advance stat sn
-    iscsi_connection_advance_stat_sn(connection);
-    // data from target
-
-    struct iSCSITarget* target = iscsi_session_target(session);
-    sg_io_hdr_t* io_hdr = iscsi_target_sg_io_hdr(target);
-    int target_status = io_hdr->status;
-    int sense_buffer_length = io_hdr->sb_len_wr;
-    byte* sense_buffer = (byte*) io_hdr->sbp;
-
-    int total_length = iscsi_pdu_calc_size(0, 2 + sense_buffer_length);
-    byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_length);
-    iscsi_pdu_set_opcode(buffer, SCSI_CMD_RES);
-    iscsi_pdu_set_final(buffer, 1);
-    iscsi_request_cmd_set_response(buffer, scsi_response);
-    iscsi_request_cmd_set_status(buffer, target_status);
-    iscsi_pdu_set_initiator_task_tag(buffer, iscsi_pdu_initiator_task_tag(request));
-    iscsi_request_cmd_set_sense_buffer(buffer, sense_buffer, sense_buffer_length); // write sense buffer
-    iscsi_pdu_set_response_header(buffer, connection);
-
-    iscsi_buffer_release_lock(response, total_length);
+    iscsi_request_cmd_send_response(connection, request, scsi_response, response);
   }
 
   return 0;

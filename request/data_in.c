@@ -21,7 +21,7 @@ static inline void iscsi_request_data_in_set_buffer_offset(byte* buffer, int off
   iscsi_byte_int2byte(buffer + 40, offset);
 }
 
-void iscsi_request_data_in_send(int initiator_task_tag, int expected_data_transfer_length, struct iSCSIConnection* connection, struct iSCSITarget* target, struct iSCSIBuffer* response) {
+void iscsi_request_data_in_send(struct iSCSIConnection* connection, int initiator_task_tag, int expected_data_transfer_length, struct iSCSITarget* target, struct iSCSIBuffer* response) {
   // TODO create data-in PDU for read operations
 
   // get total length and number of PDUs
