@@ -19,6 +19,7 @@
 #define ISCSI_TRANSFER_ENTRY_SIZE 8192
 
 #define ISCSI_TARGET_IQN "iqn.2019-10.chula.ac.th:iscsi-disk.sn.12345"
+#define ISCSI_DEFAULT_TARGET_PATH "/dev/sdb"
 
 // connection parameter default values
 #define ISCSI_CONNECTION_PARAMETER_BUFFER_SIZE 8192

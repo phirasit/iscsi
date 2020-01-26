@@ -4,6 +4,7 @@
 #include "iscsi_byte.h"
 #include "iscsi_connection.h"
 #include "iscsi_type.h"
+#include "iscsi_logger.h"
 
 #define BASIC_HEADER_SEGMENT_LENGTH 48
 #define DEFAULT_TARGET_TRANSFER_TAG 0xFFFFFFFF

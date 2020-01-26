@@ -65,7 +65,7 @@ int iscsi_request_text_process(byte* request, struct iSCSIConnection* connection
     int length = BASIC_HEADER_SEGMENT_LENGTH + text_length;
     int padded_length = iscsi_pdu_padded_length(length);
 
-    logger("send all targets: %s(%d)", response_text, text_length);
+    logger("[TEXT] send all targets: %s(%d)\n", response_text, text_length);
 
     byte* buffer = iscsi_buffer_acquire_lock_for_length(response, padded_length);
 

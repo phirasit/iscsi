@@ -39,6 +39,7 @@ static byte* bool_to_string(int b) {
 }
 
 static void set_default_parameter(struct iSCSIConnectionParameter* parameter) {
+  parameter->max_receive_data_segment_length = ISCSI_CONNECTION_PARAMETER_BUFFER_SIZE;
   parameter->max_connections          = ISCSI_CONNECTION_PARAMETER_MAX_CONNECTIONS;
   parameter->initial_r2t              = ISCSI_CONNECTION_PARAMETER_INITIAL_R2T;
   parameter->immediate_data           = ISCSI_CONNECTION_PARAMETER_IMMEDIATE_DATA;
@@ -59,7 +60,7 @@ static inline void iscsi_connection_parameter_write(struct iSCSIConnectionParame
 
 static void update_information(struct iSCSIConnectionParameter* parameter, byte* key, byte* value) {
   if (key_equal(key, MAX_RECEIVE_DATA_SEGMENT)) {
-    parameter->max_receive_data_segment_length = string_to_int(value);
+    parameter->max_receive_data_segment_length = min(string_to_int(value), ISCSI_CONNECTION_PARAMETER_BUFFER_SIZE - 1000);
   }
   if (key_equal(key, MAX_CONNECTIONS)) {
     parameter->max_connections = min(string_to_int(value), ISCSI_CONNECTION_PARAMETER_MAX_CONNECTIONS);

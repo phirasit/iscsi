@@ -9,6 +9,7 @@
 
 struct iSCSITarget {
   char* address;
+  int fd;
   sg_io_hdr_t io_hdr;
   byte buffer[ISCSI_TARGET_MEMORY_SIZE];
   byte sense_buffer[ISCSI_TARGET_SENSE_BUFFER_SIZE];

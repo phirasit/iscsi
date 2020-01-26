@@ -28,7 +28,6 @@ void iscsi_request_data_in_send(struct iSCSIConnection* connection, int initiato
   struct iSCSIConnectionParameter* parameter = iscsi_connection_parameter(connection);
   int max_receive_length = iscsi_connection_parameter_max_receive_data_segment_length(parameter);
   int num_pdu = divide_round_up(expected_data_transfer_length, max_receive_length); 
-  // / int num_pdu = (total_length + max_receive_length - 1) / max_receive_length;
 
   // get others parameters
   byte* target_data = iscsi_target_buffer(target);
@@ -39,12 +38,10 @@ void iscsi_request_data_in_send(struct iSCSIConnection* connection, int initiato
 
   logger("[REQUEST DATA IN] Start sending Data-In PDUs\n");
   logger("[REQUEST DATA IN] Total expected data length = %d\n", expected_data_transfer_length);
+  logger("[REQUEST DATA IN] PDU data length = %d\n", max_receive_length);
 
   int offset = 0;
-  for (int i = 0; i < num_pdu; ++i) {
-    // advance stat sn
-    iscsi_connection_advance_stat_sn(connection);
-
+  for (int i = 0; offset < expected_data_transfer_length; ++i) {
     // create pdu
     int data_length = min(expected_data_transfer_length - offset, max_receive_length);
     int final = offset + data_length == expected_data_transfer_length;
@@ -52,19 +49,25 @@ void iscsi_request_data_in_send(struct iSCSIConnection* connection, int initiato
     int total_length = iscsi_pdu_padded_length(pdu_length);
 
     byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_length);
-
-    logger("[REQUEST DATA IN] build buffer: %d\n", i);
+    
+    // advance stat sn
+    iscsi_connection_advance_expected_cmd_sn(connection);
+    iscsi_connection_advance_stat_sn(connection);
+  
+    logger("[REQUEST DATA IN] build buffer: %d with offset = %d / %d\n", i, offset, expected_data_transfer_length);
+    logger("[REQUEST DATA IN] data_length = %d\n", data_length);
     logger("[REQUEST DATA IN] address %p\n", buffer);
+    
     iscsi_pdu_set_opcode(buffer, SCSI_DATA_IN);
-    iscsi_pdu_set_final(buffer, final); 
+    iscsi_pdu_set_final(buffer, final);
     iscsi_request_data_in_set_acknowledge(buffer, acknowledge);
     iscsi_request_data_in_set_status(buffer, status);
-
+  
     iscsi_pdu_set_initiator_task_tag(buffer, initiator_task_tag);
     iscsi_pdu_set_target_transfer_tag(buffer, target_trasfer_tag);
     iscsi_pdu_set_response_header(buffer, connection);
     iscsi_request_data_in_set_buffer_offset(buffer, offset);
-
+  
     iscsi_pdu_set_data_segment(buffer, target_data + offset, data_length);
     iscsi_pdu_pad0(buffer, pdu_length);
 
@@ -72,4 +75,6 @@ void iscsi_request_data_in_send(struct iSCSIConnection* connection, int initiato
 
     offset += data_length;
   }
+  
+  logger("[REQUEST DATA IN] finish create data-in PDUs\n");
 }

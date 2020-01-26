@@ -11,6 +11,7 @@ int iscsi_request_nop_out_process(byte* request, struct iSCSIConnection* connect
   int data_length = min(max_receive_data_segment_length, iscsi_pdu_data_segment_length(request));
   int total_length = BASIC_HEADER_SEGMENT_LENGTH + data_length;
 
+  logger("[NOP OUT] this is a nop-out PDU\n");
   // TODO check validity of initiator_task_tag and target_transfer_tag
   int valid = 1;
 

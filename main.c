@@ -69,9 +69,16 @@ int main() {
     }
     */
 
-    struct iSCSIConnection *connection = (struct iSCSIConnection*) malloc (sizeof(struct iSCSIConnection));
-    iscsi_connection_create(connection, client_socket_fd, NULL);
-    start_connection(connection);
+    // fork new process
+    pid_t pid = fork();
+    if (pid == -1) {
+      logger("[MAIN] cannot fork a new process\n");
+    } else if (pid == 0) {
+      logger("[MAIN] new process is forked\n");
+      struct iSCSIConnection *connection = (struct iSCSIConnection *) malloc(sizeof(struct iSCSIConnection));
+      iscsi_connection_create(connection, client_socket_fd, NULL);
+      start_connection(connection);
+    }
   }
 
   return 0;
@@ -84,12 +91,12 @@ void* start_receiver(void* args) {
   int len, status;
 
   while (1) {
+    logger("[MAIN] Waiting for packet\n");
     len = recv(connection->socket_fd, buffer, BUFFER_SIZE, 0);
     if (len == -1) {
-      logger("[MAIN] error occurrd (code %d): %s\n", errno, strerror(errno));
+      logger("[MAIN] error occurred (code %d): %s\n", errno, strerror(errno));
       break;
     }
-    if (len == 0) break; // connection close
 
     logger("[MAIN] receive data length %d bytes\n", len);
 
@@ -128,14 +135,20 @@ void* start_transmit(void* args) {
       iscsi_buffer_acquire_lock(buffer);
       // logger("[MAIN] PDU Data:\n");
       // logger_hex_array(iscsi_buffer_data(buffer), length);
-      send(connection->socket_fd, iscsi_buffer_data(buffer), length, 0);
+      int result = send(connection->socket_fd, iscsi_buffer_data(buffer), length, 0);
+      if (result < 0) {
+        logger("[MAIN] Transmission error: %s\n", strerror(errno));
+        break;
+      }
       iscsi_buffer_release_lock(buffer, 0);
 
       iscsi_buffer_flush(buffer, length);
+      logger("[MAIN] remaining in transmission buffer: %d\n", iscsi_buffer_length(buffer));
     }
     usleep(10000);
   }
-
+  
+  close (connection->socket_fd);
   logger("[MAIN] Closed transmission\n");
 }
 
@@ -149,4 +162,8 @@ void start_connection(struct iSCSIConnection* connection) {
   if (stat2) {
     logger("[MAIN] Failed to start transmit thread\n");
   }
+  
+  int result1, result2;
+  pthread_join(receive_thread, (void*) &result1);
+  pthread_join(transmit_thread, (void*) &result2);
 }

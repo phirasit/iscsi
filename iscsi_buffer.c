@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "iscsi_buffer.h"
 #include "iscsi_logger.h"
 
@@ -11,30 +12,33 @@ void iscsi_buffer_new(struct iSCSIBuffer* buffer) {
 }
 
 void iscsi_buffer_acquire_lock(struct iSCSIBuffer* buffer) {
-  // logger("buffer %p: wait for lock\n", buffer);
+  // logger("[BUFFER] %p: wait for lock\n", buffer);
   sem_wait(&buffer->lock);
-  // logger("buffer %p: lock acquired\n", buffer);
+  // logger("[BUFFER] %p: lock acquired\n", buffer);
 }
 
 byte* iscsi_buffer_acquire_lock_for_length(struct iSCSIBuffer* buffer, int length) {
   if (length > ISCSI_BUFFER_SIZE) {
     return NULL;
   }
+  logger("[BUFFER] ask for buffer length = %d\n", length);
 start:
   iscsi_buffer_acquire_lock(buffer); 
   if (iscsi_buffer_free_space(buffer) < length) {
     iscsi_buffer_release_lock(buffer, 0);
-    sleep(50);
+    usleep(100);
     goto start;
   }
+  logger("[BUFFER] buffer length (%d) is allocated\n", length);
   memset(buffer->data + buffer->length, 0, length);
   return buffer->data + buffer->length;
 }
 
 void iscsi_buffer_release_lock(struct iSCSIBuffer* buffer, int offset) {
   buffer->length += offset;
+  // logger("[BUFFER] %p: lock release with offset %d\n", buffer, offset);
   sem_post(&buffer->lock);
-  logger("[BUFFER] %p: lock release with offset %d\n", buffer, offset);
+  if (offset) logger("[BUFFER] %p: lock release with offset %d\n", buffer, offset);
 }
 
 int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length) {
@@ -50,8 +54,15 @@ int iscsi_buffer_receive(struct iSCSIBuffer* buffer, byte* receive, int length) 
 }
 
 void iscsi_buffer_flush(struct iSCSIBuffer* buffer, int length) {
+  assert (length <= buffer->length);
+  logger("lock is being asked\n");
   iscsi_buffer_acquire_lock(buffer);
   // logger_hex_array(buffer->data, length);
-  memcpy(buffer->data, buffer->data + length, buffer->length - length);
+  logger("lock is acquired\n");
+  for (int i = 0; i < buffer->length - length; ++i) {
+    buffer->data[i] = buffer->data[i + length];
+  }
+  // memcpy(buffer->data + length, buffer->data, buffer->length - length);
   iscsi_buffer_release_lock(buffer, -length);
+  logger("lock is released\n");
 }

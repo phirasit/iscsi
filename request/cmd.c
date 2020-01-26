@@ -57,7 +57,7 @@ static int iscsi_request_cmd_send_response(struct iSCSIConnection* connection, b
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_length);
   iscsi_pdu_set_opcode(buffer, SCSI_CMD_RES);
   iscsi_pdu_set_final(buffer, 1);
-  iscsi_request_cmd_set_response(buffer, scsi_response);
+  iscsi_request_cmd_set_response(buffer, 0);
   iscsi_request_cmd_set_status(buffer, target_status);
   iscsi_pdu_set_initiator_task_tag(buffer, iscsi_pdu_initiator_task_tag(request));
   iscsi_request_cmd_set_sense_buffer(buffer, sense_buffer, sense_buffer_length); // write sense buffer
@@ -65,6 +65,7 @@ static int iscsi_request_cmd_send_response(struct iSCSIConnection* connection, b
 
   iscsi_buffer_release_lock(response, total_length);
 }
+
 int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection, struct iSCSIBuffer* response) {
   // advance expected cmd sn
   iscsi_connection_advance_expected_cmd_sn(connection);
@@ -81,6 +82,7 @@ int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection,
 
   logger("[REQUEST CMD] IS WRITE REQUEST: %d\n", iscsi_request_cmd_write(request));
   logger("[REQUEST CMD] IS READ REQUEST: %d\n", iscsi_request_cmd_read(request));
+  logger("[REQUEST CMD] breakpoint 0\n");
   if (iscsi_request_cmd_write(request) && data_seg_length < exp_data_transfer) {
     if (!iscsi_connection_parameter_initial_r2t(parameter)) {
       int first_data_pdu_length = min(
@@ -123,13 +125,15 @@ int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection,
     // TODO return success status
     return 0;
   }
-
-
+  
+  
+  logger("[REQUEST CMD] success\n");
   // execute command
   int expect_data_transfer_length = iscsi_request_cmd_exp_data_transfer(request);
   // TODO change allocate memory to expect_data_transfer_length
   int scsi_response = iscsi_session_execute_command(session, iscsi_request_cmd_cdb(request), response);
-
+  
+  logger("[REQUEST CMD] done\n");
   if (iscsi_request_cmd_read(request)) {
     struct iSCSITarget* target = iscsi_session_target(session);
     int initiator_task_tag = iscsi_pdu_initiator_task_tag(request);

@@ -4,6 +4,7 @@
 #include "iscsi_connection.h"
 #include "iscsi_target.h"
 #include "iscsi_transfer_entry.h"
+#include "iscsi_logger.h"
 
 #include <string.h>
 
@@ -52,7 +53,6 @@ int iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struc
     iscsi_command_execute_command(command);
   }
   */
-
   return iscsi_target_execute_scsi_command(session->target, cdb);
 }
 
