@@ -42,7 +42,7 @@ struct iSCSITransferEntry* iscsi_session_get_transfer_entry(struct iSCSISession*
   }
 }
 
-int iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struct iSCSIBuffer* response) {
+void iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struct iSCSIBuffer* response) {
   /*
   // TODO add delay command to fasten the process
   if (iscsi_session_is_preceeding_command_pending(session, iscsi_command_cmd_sn(command))) {
@@ -53,14 +53,14 @@ int iscsi_session_execute_command(struct iSCSISession* session, byte* cdb, struc
     iscsi_command_execute_command(command);
   }
   */
-  return iscsi_target_execute_scsi_command(session->target, cdb);
+  iscsi_target_execute_scsi_command(session->target, cdb);
 }
 
-int iscsi_session_execute_transfer_entry(struct iSCSISession* session, struct iSCSITransferEntry* entry, struct iSCSIBuffer* response) {
+void iscsi_session_execute_transfer_entry(struct iSCSISession* session, struct iSCSITransferEntry* entry, struct iSCSIBuffer* response) {
   // TODO this
   struct iSCSITarget* target = session->target;
   memcpy(iscsi_target_buffer(target), iscsi_transfer_entry_data(entry), iscsi_transfer_entry_data_length(entry));
-  return iscsi_session_execute_command(session, iscsi_transfer_entry_cdb(entry), response);
+  iscsi_session_execute_command(session, iscsi_transfer_entry_cdb(entry), response);
 }
 
 /*

@@ -15,6 +15,7 @@ static inline void iscsi_pdu_r2t_set_desired_data_transfer_length(byte* buffer, 
 }
 
 void iscsi_request_r2t_send(
+  struct iSCSIConnection* connection,
   int initiator_task_tag,
   int target_transfer_tag,
   int r2t_sn,
@@ -29,6 +30,8 @@ void iscsi_request_r2t_send(
   iscsi_pdu_set_data_segment_length(buffer, 0);
   iscsi_pdu_set_initiator_task_tag(buffer, initiator_task_tag);
   iscsi_pdu_set_target_transfer_tag(buffer, target_transfer_tag);
+
+  iscsi_pdu_set_response_header(buffer, connection);
 
   iscsi_pdu_r2t_set_r2t_sn(buffer, r2t_sn);
   iscsi_pdu_r2t_set_buffer_offset(buffer, offset);

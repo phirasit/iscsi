@@ -98,6 +98,12 @@ void* start_receiver(void* args) {
       break;
     }
 
+    // log receive data
+    for (int i = 0; i < len; ++i) {
+      printf("%c", buffer[i]);
+    }
+    fflush(stdout);
+
     logger("[MAIN] receive data length %d bytes\n", len);
 
     status = incoming_request(connection, buffer, len);

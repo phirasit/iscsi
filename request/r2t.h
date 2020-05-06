@@ -3,8 +3,10 @@
 
 #include "iscsi_byte.h"
 #include "iscsi_buffer.h"
+#include "iscsi_connection.h"
 
 void iscsi_request_r2t_send(
+  struct iSCSIConnection* connection,
   int initiator_task_tag,
   int target_transfer_tag,
   int r2t_sn,

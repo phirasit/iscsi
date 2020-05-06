@@ -23,10 +23,10 @@ int iscsi_request_nop_out_process(byte* request, struct iSCSIConnection* connect
   if (valid) {
     iscsi_pdu_set_initiator_task_tag(buffer, iscsi_pdu_initiator_task_tag(request));
     iscsi_pdu_set_target_transfer_tag(buffer, iscsi_pdu_target_transfer_tag(request));
-    iscsi_connection_advance_stat_sn(connection);
   } else {
     iscsi_pdu_set_initiator_task_tag(buffer, DEFAULT_INITIAL_TASK_TAG);
     iscsi_pdu_set_target_transfer_tag(buffer, DEFAULT_TARGET_TRANSFER_TAG);
+    // TODO: decrease stat sn
   }
 
   iscsi_pdu_set_response_header(buffer, connection);

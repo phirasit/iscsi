@@ -10,6 +10,7 @@
 struct iSCSITarget {
   char* address;
   int fd;
+  int scsi_response;
   sg_io_hdr_t io_hdr;
   byte buffer[ISCSI_TARGET_MEMORY_SIZE];
   byte sense_buffer[ISCSI_TARGET_SENSE_BUFFER_SIZE];
@@ -29,7 +30,7 @@ static inline sg_io_hdr_t* iscsi_target_sg_io_hdr(struct iSCSITarget* target) {
 // function prototypes
 
 void iscsi_target_create_default(struct iSCSITarget* target);
-int iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb);
+void iscsi_target_execute_scsi_command(struct iSCSITarget* target, byte* cdb);
 
 // DEPRICATE
 // void iscsi_target_cmd_get_r2t_pdu(byte* command, struct iSCSIConnection* connection, struct iSCSIBuffer* response);

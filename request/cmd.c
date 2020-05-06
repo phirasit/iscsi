@@ -40,15 +40,13 @@ static inline void iscsi_request_cmd_set_sense_buffer(byte* buffer, byte* sense_
   memcpy(buffer + (BASIC_HEADER_SEGMENT_LENGTH + 2), sense_buffer, length);
 }
 
-static int iscsi_request_cmd_send_response(struct iSCSIConnection* connection, byte* request, int scsi_response, struct iSCSIBuffer* response) {
+int iscsi_request_cmd_send_response(struct iSCSIConnection* connection, byte* request, struct iSCSIBuffer* response) {
   struct iSCSISession* session = connection->session_reference;
-
-  // advance stat sn
-  iscsi_connection_advance_stat_sn(connection);
 
   // data from target
   struct iSCSITarget* target = iscsi_session_target(session);
   sg_io_hdr_t* io_hdr = iscsi_target_sg_io_hdr(target);
+  int scsi_response = target->scsi_response;
   int target_status = io_hdr->status;
   int sense_buffer_length = io_hdr->sb_len_wr;
   byte* sense_buffer = (byte*) io_hdr->sbp;
@@ -57,7 +55,7 @@ static int iscsi_request_cmd_send_response(struct iSCSIConnection* connection, b
   byte* buffer = iscsi_buffer_acquire_lock_for_length(response, total_length);
   iscsi_pdu_set_opcode(buffer, SCSI_CMD_RES);
   iscsi_pdu_set_final(buffer, 1);
-  iscsi_request_cmd_set_response(buffer, 0);
+  iscsi_request_cmd_set_response(buffer, scsi_response);
   iscsi_request_cmd_set_status(buffer, target_status);
   iscsi_pdu_set_initiator_task_tag(buffer, iscsi_pdu_initiator_task_tag(request));
   iscsi_request_cmd_set_sense_buffer(buffer, sense_buffer, sense_buffer_length); // write sense buffer
@@ -111,6 +109,7 @@ int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection,
     for (int i = 0; i < outgoing_r2t; ++i) {
       // create r2t PDU
       iscsi_request_r2t_send(
+        connection,
         iscsi_pdu_initiator_task_tag(request),
         transfer_tag,
         i, // r2t sn
@@ -129,17 +128,21 @@ int iscsi_request_cmd_process(byte* request, struct iSCSIConnection* connection,
   
   logger("[REQUEST CMD] success\n");
   // execute command
-  int expect_data_transfer_length = iscsi_request_cmd_exp_data_transfer(request);
   // TODO change allocate memory to expect_data_transfer_length
-  int scsi_response = iscsi_session_execute_command(session, iscsi_request_cmd_cdb(request), response);
+  iscsi_session_execute_command(session, iscsi_request_cmd_cdb(request), response);
   
   logger("[REQUEST CMD] done\n");
   if (iscsi_request_cmd_read(request)) {
     struct iSCSITarget* target = iscsi_session_target(session);
     int initiator_task_tag = iscsi_pdu_initiator_task_tag(request);
+    int expect_data_transfer_length = min(
+      iscsi_request_cmd_exp_data_transfer(request),
+      ISCSI_TARGET_MEMORY_SIZE - target->io_hdr.resid
+    );
+    logger("[REQUEST CMD] length %d\n", target->io_hdr.resid);
     iscsi_request_data_in_send(connection, initiator_task_tag, expect_data_transfer_length, target, response);
   } else {
-    iscsi_request_cmd_send_response(connection, request, scsi_response, response);
+    iscsi_request_cmd_send_response(connection, request, response);
   }
 
   return 0;

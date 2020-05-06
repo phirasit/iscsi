@@ -1,5 +1,6 @@
 #include "request/data_out.h"
 
+#include "request/cmd.h"
 #include "request/r2t.h"
 #include "iscsi_byte.h"
 #include "iscsi_pdu.h"
@@ -55,6 +56,7 @@ int iscsi_request_data_out_process(byte* request, struct iSCSIConnection* connec
 
     // execute command
     iscsi_session_execute_transfer_entry(session, transfer_entry, response);
+    iscsi_request_cmd_send_response(connection, request, response);
 
     /*
     if (iscsi_session_is_preceeding_command_pending(session, cmd_sn)) {
@@ -76,6 +78,7 @@ int iscsi_request_data_out_process(byte* request, struct iSCSIConnection* connec
       int next_offset = iscsi_transfer_entry_next_offset(transfer_entry);
 
       iscsi_request_r2t_send(
+        connection,
         iscsi_pdu_initiator_task_tag(request),
         iscsi_pdu_target_transfer_tag(request),
         next_r2t_sn,

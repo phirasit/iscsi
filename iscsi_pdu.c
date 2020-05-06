@@ -10,6 +10,8 @@ void iscsi_pdu_set_response_header(byte* pdu, struct iSCSIConnection* connection
   iscsi_byte_int2byte(pdu + 24, iscsi_connection_stat_sn(connection));
   iscsi_byte_int2byte(pdu + 28, iscsi_connection_exp_cmd_sn(connection));
   iscsi_byte_int2byte(pdu + 32, iscsi_connection_max_cmd_sn(connection));
+
+  iscsi_connection_advance_stat_sn(connection);
 }
 
 int iscsi_pdu_valid(byte* pdu, int length) {
